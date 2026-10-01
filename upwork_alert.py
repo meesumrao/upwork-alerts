@@ -47,6 +47,23 @@ CRITERIA = (HERE / "prompt.txt").read_text(encoding="utf-8")
 PROPOSAL_FORMAT = (HERE / "proposal_format.txt").read_text(encoding="utf-8")
 
 
+def field(obj, *names):
+    """Apify library ke purane (dict) aur naye (object) dono versions ke liye."""
+    if obj is None:
+        return None
+    for n in names:
+        if isinstance(obj, dict):
+            if n in obj:
+                return obj[n]
+        elif hasattr(obj, n):
+            return getattr(obj, n)
+    return None
+
+
+def run_ok(run):
+    return "SUCCEEDED" in str(field(run, "status", "status_") or "")
+
+
 def iso(dt):
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -212,9 +229,9 @@ def notify(job, info, ai):
 def main():
     client = ApifyClient(APIFY_TOKEN)
     store = client.key_value_stores().get_or_create(name=STORE_NAME)
-    kv = client.key_value_store(store["id"])
+    kv = client.key_value_store(field(store, "id"))
     record = kv.get_record("STATE")
-    state = record["value"] if record else {}
+    state = field(record, "value") or {}
     seen = state.get("seen", [])
 
     now = datetime.now(timezone.utc)
@@ -284,13 +301,16 @@ def main():
         except Exception as ex:
             print(f"Koshish {i} fail (input reject?): {ex}")
             continue
-        if run and run.get("status") == "SUCCEEDED":
+        if run_ok(run):
             print(f"Koshish {i} kamyab")
             break
-        print(f"Koshish {i} run status: {run and run.get('status')}")
-    if not run or run.get("status") != "SUCCEEDED":
+        print(f"Koshish {i} run status: {field(run, 'status')}")
+    if not run_ok(run):
         raise RuntimeError("Actor run teeno koshishon mein fail hua")
-    items = client.dataset(run["defaultDatasetId"]).list_items().items
+    dataset_id = field(run, "defaultDatasetId", "default_dataset_id")
+    items = field(client.dataset(dataset_id).list_items(), "items") or []
+    items = [i if isinstance(i, dict) else (i.model_dump() if hasattr(i, "model_dump") else dict(i))
+             for i in items]
     print(f"Actor ne {len(items)} jobs di")
     if len(items) >= LIMIT:
         slack_text(f"⚠️ Limit ({LIMIT}) poori ho gayi, kuch jobs miss ho sakti hain.")
