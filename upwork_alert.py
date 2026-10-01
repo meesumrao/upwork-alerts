@@ -36,6 +36,9 @@ LAG_MINUTES = int(os.getenv("LAG_MINUTES") or "30")
 FIRST_RUN_LOOKBACK_MIN = 60
 MAX_WINDOW_HOURS = 6
 LIMIT = 100
+# Purani jobs test karne ke liye: Run workflow mein "backfill_hours" (jaise 48)
+BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
+BACKFILL_LIMIT = 300      # backfill mein max jobs (~$3 se zyada kabhi nahi)
 SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
 
 MIN_FIXED = 250
@@ -236,23 +239,29 @@ def main():
 
     now = datetime.now(timezone.utc)
     to_dt = now - timedelta(minutes=LAG_MINUTES)
-    if state.get("cursor"):
-        from_dt = datetime.fromisoformat(state["cursor"].replace("Z", "+00:00"))
+    limit = LIMIT
+    if BACKFILL_HOURS > 0:
+        from_dt = to_dt - timedelta(hours=BACKFILL_HOURS)
+        limit = BACKFILL_LIMIT
+        print(f"BACKFILL: pichle {BACKFILL_HOURS} ghante ki jobs")
     else:
-        from_dt = to_dt - timedelta(minutes=FIRST_RUN_LOOKBACK_MIN)
-    from_dt = max(from_dt, to_dt - timedelta(hours=MAX_WINDOW_HOURS))
+        if state.get("cursor"):
+            from_dt = datetime.fromisoformat(state["cursor"].replace("Z", "+00:00"))
+        else:
+            from_dt = to_dt - timedelta(minutes=FIRST_RUN_LOOKBACK_MIN)
+        from_dt = max(from_dt, to_dt - timedelta(hours=MAX_WINDOW_HOURS))
     if from_dt >= to_dt:
         print("Window khaali hai.")
         return
 
     base_input = {
-        "limit": LIMIT,
+        "limit": limit,
         "fromDate": iso(from_dt),
         "toDate": iso(to_dt),
         "includeKeywords.keywords": KEYWORDS,
         "includeKeywords.matchTitle": True,
         "includeKeywords.matchSkills": True,
-        "includeKeywords.matchDescription": False,
+        "includeKeywords.matchDescription": True,   # title, skills ya description, kahin bhi "Shopify"
         # --- Aapki sharten (actor ke server pe, reject hui jobs ke paise nahi) ---
         "client.paymentMethodVerified": True,
         "budget.minClientHireRate": MIN_HIRE_RATE + 1,
@@ -312,8 +321,8 @@ def main():
     items = [i if isinstance(i, dict) else (i.model_dump() if hasattr(i, "model_dump") else dict(i))
              for i in items]
     print(f"Actor ne {len(items)} jobs di")
-    if len(items) >= LIMIT:
-        slack_text(f"⚠️ Limit ({LIMIT}) poori ho gayi, kuch jobs miss ho sakti hain.")
+    if len(items) >= limit:
+        slack_text(f"⚠️ Limit ({limit}) poori ho gayi, kuch jobs miss ho sakti hain.")
 
     for job in sorted(items, key=lambda j: j.get("createdAt", "")):
         uid = job.get("uid")
@@ -338,9 +347,12 @@ def main():
                     slack_job([f"⏭ Skipped: *{esc(job.get('title', ''))}*",
                                esc(ai.get("reason", ""))], job.get("externalLink"))
         seen.append(uid)
-        kv.set_record("STATE", {"cursor": state.get("cursor"), "seen": seen[-1000:]})
+        kv.set_record("STATE", {"cursor": state.get("cursor"), "seen": seen[-2000:]})
 
-    kv.set_record("STATE", {"cursor": iso(to_dt), "seen": seen[-1000:]})
+    new_cursor = iso(to_dt)
+    if state.get("cursor") and state["cursor"] > new_cursor:
+        new_cursor = state["cursor"]
+    kv.set_record("STATE", {"cursor": new_cursor, "seen": seen[-2000:]})
     print("Done")
 
 
