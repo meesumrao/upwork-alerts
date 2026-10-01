@@ -1,9 +1,71 @@
-(Yahan apna proposal format likhein. Misal:)
+Write the proposal exactly in Meesum's style. Language: English.
 
-- Pehli line mein client ki problem ka zikr, "Dear Hiring Manager" se shuru mat karo
-- Agar job post mein koi khaas word se shuru karne ko kaha hai (jaise "PURPLE"), to wahi se shuru karo
-- 2-3 lines: main ye kaam kaise karunga
-- 1 line: mera relevant experience
-- Aakhir mein ek sawal client se
-- Total 120-180 words, simple English, koi emojis nahi
-- Aakhir mein naam: Meesum
+STRUCTURE
+1. If the job post asks to start the proposal with a specific word or phrase (e.g. "Start with PURPLE", "begin with FUNNEL AUDIT", "write Red so we know you read this"), put that exact word/phrase as the very first line, before everything else.
+2. HEADLINE: one line in ALL CAPS, first person, a bold promise or offer specific to this job, using "..." in the middle, ending with " 😎".
+   Examples of the headline style:
+   - I'LL MODERNIZE YOUR STORE FOR FREE FIRST... IF YOU LIKE THE DIRECTION, LET'S KEEP WORKING TOGETHER. 😎
+   - I'LL AUDIT YOUR CURRENT PRODUCTS FIRST... THEN WE'LL KNOW WHAT'S ACTUALLY WORTH SELLING IN THE UK. 😎
+   - I'LL GET ALL 10 PRODUCTS LIVE WITHIN 14 HOURS... CLEAN, COMPLETE AND READY TO SELL. 😎
+   - I'M ALREADY RUNNING A HEAVY DROPSHIPPING SYSTEM... GIVE ME ONE MESSAGE AND I'LL SHOW YOU WHY I'M A STRONG FIT FOR THIS. 😎
+3. A blank line, then "Hi,"
+4. Paragraph 1 (1-2 sentences): "I've been working with Shopify for 12+ years..." plus the skills that match THIS job.
+5. Paragraph 2 (1-2 sentences): show I understand their real problem and how I'd approach it. Often in the form "I wouldn't just ... I'd ..." or "I don't just follow instructions... I look at the store and suggest what should actually be improved."
+6. Optional paragraph 3 (1-2 sentences): only if the client asked specific questions or needs specific proof (tools, platforms, whether I can implement it myself, communication preference). Answer briefly.
+7. Last line: a short, confident call to action, e.g. "Send me the store and let's get started." or "Send me the store link and current product list... I'll show you how I'd approach it." or "Just message me once."
+8. A blank line, then the name: Meesum
+9. A blank line, then this portfolio list exactly, one per line:
+zerolifestyle.co
+shopjoga.com
+axrah.com
+otheblue.com
+checkmateatelier.com
+forestsuperfoods.com
+audionic.co
+stargazercastiron.com
+shopoatful.com
+thejacketmaker.com
+
+STYLE RULES
+- Short and strong. Body (between "Hi," and "Meesum") should be about 60-110 words.
+- Simple, confident, conversational English. Short paragraphs with blank lines between them.
+- Use "..." for pauses. Never use em dashes.
+- Don't mention any store names from the portfolio list inside the body; the list already shows them.
+- Never invent clients, results, numbers or experience. Only use what's in my profile.
+- If the job is a design / redesign / "make my store look better" / CRO job, offer to improve one section for free first.
+- If it's a redesign or custom sections job, I can mention: "I'm currently redesigning AtlantaHobby.com with custom Shopify sections, and I can show you the work."
+- If it's a dropshipping job, make it clear I do this every day and run a large dropshipping operation, and invite them to message me once.
+- If it's a product listing / upload job with a deadline, commit to a fast, specific delivery time.
+- If the budget type matters, I normally work hourly, but a fixed price for the complete project is fine too.
+- I prefer written communication; mention it only if the client says they prefer chat over calls.
+- No "Dear Hiring Manager", no long intros, no bullet points in the proposal.
+
+GOLD STANDARD EXAMPLE (the client rated this 10/10):
+I'LL MODERNIZE YOUR STORE FOR FREE FIRST... IF YOU LIKE THE DIRECTION, LET'S KEEP WORKING TOGETHER. 😎
+
+Hi,
+
+I've been working with Shopify for 12+ years, especially fashion and lifestyle stores. I handle Shopify 2.0, Liquid, custom sections, mobile UX, CRO and ongoing store improvements.
+
+I don't just follow instructions... I look at the store, spot what feels outdated or confusing, and suggest what should actually be improved.
+
+Send me the store and let's get started.
+
+Meesum
+
+zerolifestyle.co
+shopjoga.com
+axrah.com
+otheblue.com
+checkmateatelier.com
+forestsuperfoods.com
+audionic.co
+stargazercastiron.com
+shopoatful.com
+thejacketmaker.com
+
+SCREENING QUESTION ANSWERS
+- Answer each screening question in 1-3 short sentences, first person, same confident tone.
+- No headline, no name, no portfolio list in the answers.
+- If a question asks for links or examples of stores, use the most relevant stores from the portfolio list.
+- Never invent facts. If an answer depends on something I'd need to check (exact price, timeline for an unclear scope), give a reasonable answer and say I'll confirm once I see the details.
