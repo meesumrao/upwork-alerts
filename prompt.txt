@@ -1,5 +1,5 @@
 WHO I AM
-I'm Meesum, a Shopify expert with 12+ years of experience. I'm currently running a large Shopify dropshipping operation day to day, and I build and improve Shopify stores for clients.
+I'm Meesum, a Shopify and ecommerce expert with 12+ years of experience. I'm currently running a large Shopify dropshipping operation day to day, and I build, improve and run Shopify stores for clients.
 
 MY SKILLS
 - Shopify development: Shopify 2.0, Liquid, HTML/CSS, custom sections, theme customization
@@ -8,21 +8,24 @@ MY SKILLS
 - Store setup and ongoing store management / maintenance
 - Product work: product research, product listing/upload, images, descriptions, bullet points, keywords, variants, collections, final QA
 - Dropshipping: product research and validation, supplier sourcing (CJdropshipping, DSers, AliExpress, EPROLO, Syncee), pricing and margins
+- Meta ads (Facebook/Instagram) for ecommerce and Shopify brands: campaign setup and management, testing, scaling
+- Ecommerce operations: virtual assistant work, customer support (emails, live chat, order issues, "where is my order"), order management, tracking, store admin
 - Strongest niches: fashion, activewear and lifestyle stores
 
 APPLY (apply = true) when:
-- The main work is on a Shopify store and fits any of my skills above. This includes small tasks, product listing, store setup, design polish, redesigns, custom sections, CRO, dropshipping and ongoing store work.
-- Be generous: if the job is mostly Shopify and I could realistically do it, apply.
+- The job is connected to an ecommerce / Shopify business and fits ANY of my skills above.
+- This includes: Shopify development and design, small fixes, product listing, store setup, CRO, dropshipping, Meta ads for an ecommerce/Shopify brand, ecommerce VA work, customer support, order management and store operations.
+- Full-time, part-time, long-term and low-budget hourly roles are all fine.
+- Be generous: if it's ecommerce work and Shopify is part of the business, apply.
 
-DON'T APPLY (apply = false) when:
-- The job is mainly NOT Shopify work, e.g. building a custom app/AI pipeline in Python, a non-Shopify platform build (WordPress, Wix, Webflow, custom React site) where Shopify is only mentioned in passing.
-- The job is only paid ads management (Meta/Google ads) with no Shopify store work.
-- The job is only customer service / email support / virtual assistant work with no store building or product work.
-- The client requires a specific native language or nationality I can't meet (e.g. "Dutch native only", "US-based only").
-- The job is clearly a scam, asks to work or pay outside Upwork, or asks for free unpaid "test work" on a large scale.
+DON'T APPLY (apply = false) only when:
+- The job is mainly custom software engineering that isn't store work, e.g. building a custom app, API integration platform or AI pipeline in Python/Node, where Shopify is only one of many integrations.
+- The business is not ecommerce at all and Shopify is only mentioned in passing.
+- The client requires a specific native language or nationality I can't meet (e.g. "Dutch native only", "US-based only"). English requirements are fine.
+- The job is clearly a scam, asks to work or pay outside Upwork, or asks for large amounts of free unpaid "test work".
 
 SCORE (0-10)
 10 = perfect fit for my strongest skills (Shopify design/dev/CRO, fashion or lifestyle store, dropshipping).
-7-9 = good Shopify fit.
+7-9 = good fit (any Shopify / ecommerce work from my skills list, including Meta ads, VA and customer support for ecommerce brands).
 4-6 = partly fits.
 Below 4 = poor fit (usually apply = false).

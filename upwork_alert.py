@@ -11,6 +11,7 @@ Flow:
      (long-press -> Copy text = poora proposal copy)
 """
 import json
+import re
 import os
 import time
 from datetime import datetime, timedelta, timezone
@@ -205,27 +206,50 @@ def slack_job(lines, url=None):
     slack_post({"text": lines[0] if lines else "Upwork job", "blocks": blocks})
 
 
-def notify(job, info, ai):
-    url = job.get("externalLink") or f"https://www.upwork.com/jobs/{job.get('ciphertext', '')}"
-    lines = [
-        f"✅ *{esc(job.get('title', 'Untitled'))}*",
+EMOJI_RE = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F\u200D]+")
+
+
+def strip_emoji(text):
+    """Slack mobile copy mein emoji ':sunglasses:' ban jata hai, is liye proposal se hata do."""
+    cleaned = EMOJI_RE.sub("", text or "")
+    return "\n".join(re.sub(r" {2,}", " ", line).rstrip() for line in cleaned.split("\n"))
+
+
+def job_lines(job, info, ai, icon):
+    """Job ki details (apply aur skip dono messages ke liye)."""
+    return [
+        f"{icon} *{esc(job.get('title', 'Untitled'))}*",
         f"💰 {esc(money_text(job, info['kind']))}  |  ⭐ Fit: {ai.get('score', '?')}/10",
         f"🏢 {esc((job.get('client') or {}).get('countryCode', '?'))}  |  "
         f"${info['spent']:,.0f} spent  |  {info['hires']} hires (${info['per_hire']:,.0f}/hire)  |  "
         f"{info['hire_rate']}% hire rate",
+    ] + ([f"🎟 Connects: {job['applicationCost']}"] if job.get("applicationCost") else []) + [
         f"🧠 {esc(ai.get('reason', ''))}",
     ]
-    if job.get("applicationCost"):
-        lines.append(f"🎟 Connects: {job['applicationCost']}")
-    slack_job(lines, url)
 
-    # Proposal akela message: long-press -> Copy text
-    slack_text(ai.get("proposal", ""))
+
+def job_url(job):
+    return job.get("externalLink") or f"https://www.upwork.com/jobs/{job.get('ciphertext', '')}"
+
+
+def notify(job, info, ai):
+    proposal = ai.get("proposal", "")
+    lines = job_lines(job, info, ai, "✅")
+    if EMOJI_RE.search(proposal):
+        lines.append("😎 _Upwork pe paste karne ke baad headline ke aakhir mein emoji khud laga dein._")
+    slack_job(lines, job_url(job))
+
+    # Proposal akela message: long-press -> Copy text (emoji ke baghair)
+    slack_text(strip_emoji(proposal))
 
     qs = questions_list(job)
     for i, ans in enumerate(ai.get("screening_answers") or []):
         q = qs[i] if i < len(qs) else f"Question {i + 1}"
-        slack_text(f"Q: {q}\n\n{ans}")
+        slack_text(strip_emoji(f"Q: {q}\n\n{ans}"))
+
+
+def notify_skipped(job, info, ai):
+    slack_job(job_lines(job, info, ai, "⏭ Skipped:"), job_url(job))
 
 
 # ---------- Main ----------
@@ -344,8 +368,7 @@ def main():
             elif ai:
                 print(f"AI skip: {job.get('title', '')[:50]} ({ai.get('reason')})")
                 if SEND_SKIPPED:
-                    slack_job([f"⏭ Skipped: *{esc(job.get('title', ''))}*",
-                               esc(ai.get("reason", ""))], job.get("externalLink"))
+                    notify_skipped(job, info, ai)
         seen.append(uid)
         kv.set_record("STATE", {"cursor": state.get("cursor"), "seen": seen[-2000:]})
 
