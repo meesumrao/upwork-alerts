@@ -1,0 +1,9 @@
+(Yahan apna proposal format likhein. Misal:)
+
+- Pehli line mein client ki problem ka zikr, "Dear Hiring Manager" se shuru mat karo
+- Agar job post mein koi khaas word se shuru karne ko kaha hai (jaise "PURPLE"), to wahi se shuru karo
+- 2-3 lines: main ye kaam kaise karunga
+- 1 line: mera relevant experience
+- Aakhir mein ek sawal client se
+- Total 120-180 words, simple English, koi emojis nahi
+- Aakhir mein naam: Meesum
