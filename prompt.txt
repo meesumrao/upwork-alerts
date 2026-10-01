@@ -1,14 +1,28 @@
-(Yahan apni sharten likhein ke AI kab "apply karo" bole. Misal:)
+WHO I AM
+I'm Meesum, a Shopify expert with 12+ years of experience. I'm currently running a large Shopify dropshipping operation day to day, and I build and improve Shopify stores for clients.
 
-Main Shopify developer hoon. Meri skills: Shopify theme customization, Liquid,
-Online Store 2.0, store setup, speed optimization, custom sections.
+MY SKILLS
+- Shopify development: Shopify 2.0, Liquid, HTML/CSS, custom sections, theme customization
+- Store design and redesign: modern layouts, PDPs (product pages), mobile UX, navigation
+- CRO: conversion-focused improvements, customer journey, cart and checkout experience
+- Store setup and ongoing store management / maintenance
+- Product work: product research, product listing/upload, images, descriptions, bullet points, keywords, variants, collections, final QA
+- Dropshipping: product research and validation, supplier sourcing (CJdropshipping, DSers, AliExpress, EPROLO, Syncee), pricing and margins
+- Strongest niches: fashion, activewear and lifestyle stores
 
-Apply karo agar:
-- Kaam Shopify development/customization/store setup ka hai
-- Scope clear hai aur budget kaam ke hisaab se theek hai
+APPLY (apply = true) when:
+- The main work is on a Shopify store and fits any of my skills above. This includes small tasks, product listing, store setup, design polish, redesigns, custom sections, CRO, dropshipping and ongoing store work.
+- Be generous: if the job is mostly Shopify and I could realistically do it, apply.
 
-Apply mat karo agar:
-- Sirf data entry, product upload, customer service ya VA ka kaam hai
-- Sirf ads/marketing ka kaam hai
-- Client kisi khaas country ke freelancer mangta hai (jaise "Dutch native only")
-- Budget kaam ke hisaab se bohot kam hai
+DON'T APPLY (apply = false) when:
+- The job is mainly NOT Shopify work, e.g. building a custom app/AI pipeline in Python, a non-Shopify platform build (WordPress, Wix, Webflow, custom React site) where Shopify is only mentioned in passing.
+- The job is only paid ads management (Meta/Google ads) with no Shopify store work.
+- The job is only customer service / email support / virtual assistant work with no store building or product work.
+- The client requires a specific native language or nationality I can't meet (e.g. "Dutch native only", "US-based only").
+- The job is clearly a scam, asks to work or pay outside Upwork, or asks for free unpaid "test work" on a large scale.
+
+SCORE (0-10)
+10 = perfect fit for my strongest skills (Shopify design/dev/CRO, fashion or lifestyle store, dropshipping).
+7-9 = good Shopify fit.
+4-6 = partly fits.
+Below 4 = poor fit (usually apply = false).
