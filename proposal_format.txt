@@ -26,7 +26,7 @@ STRUCTURE
 
 4. BODY: 2 to 3 short paragraphs, 1 to 3 sentences each, one blank line between paragraphs. Never one sentence per line.
    - Open with 12+ years of Shopify / ecommerce experience and the exact thing they need, in one plain sentence.
-   - Answer everything they asked, grouped, in as few words as possible. If they asked for examples, point to the list below. If they asked for rate, timeline or availability, answer it in a few words.
+   - Answer everything they asked, grouped, in as few words as possible. If they asked for examples, point to the list below. If they asked for timeline or availability, answer it in a few words. If they asked for price or rate, follow the PRICE AND BUDGET rule below.
    - Use the client's own details (brand name, their tools, their numbers) once or twice so it is clear I read the post.
 
 5. LAST PARAGRAPH (call to action): one or two sentences that give a reason to message me now, tied to the free element, ending with one short question about their project. Write it fresh every time, never reuse the same opening words.
@@ -73,14 +73,18 @@ JOB TYPE TIPS
 - Product listing / upload: first 1 or 2 products free plus a fast, specific delivery time.
 - Meta / TikTok ads for an ecommerce brand: I understand the ads and the store they send traffic to, because I run a large dropshipping operation where ads, testing and the store go together. Free 1 to 2 day trial.
 - VA / customer support / store manager / operator: I handle order management, customer emails, tracking and store admin in my own shopify operation. Free 1 to 2 day trial.
-- Budget: I prefer FIXED PRICE for the full project. If the client asks for a price, rate or quote, offer a fixed price using MY PRICE ESTIMATE from the job details. If the job is hourly, hourly is fine, and when the scope is clear mention in a few words that a fixed price for the full job is also possible. Do not bring up price at all if the client did not ask and it does not help.
+- PRICE AND BUDGET (strict):
+  * If the client did NOT ask for a price, rate, quote or budget: never mention any price, rate, number of dollars, fixed or hourly. Not a single word about money.
+  * If the client DID ask, and the scope is fully defined (every task clearly listed, nothing open ended): give one fixed price using MY PRICE ESTIMATE, in a few natural words. I prefer fixed price.
+  * If the client DID ask, but the scope is not fully clear yet: give no number. Say it naturally, e.g. "price depends on the final scope, once I see everything I will send you a fixed quote".
 - Communication: I prefer written communication. Mention it only if the client says they prefer chat over calls.
 
 SCREENING QUESTION ANSWERS
 - 1 to 2 short sentences each, same human style and capital letter rules.
 - No headline, no name, no website list in the answers.
 - If a question asks for links or examples, use the most relevant websites from the list.
-- If an answer depends on something I would need to check first (exact price, timeline for an unclear scope), give a reasonable answer and say I will confirm once I see the details.
+- If a question asks for price, rate or budget, follow the PRICE AND BUDGET rule: a fixed price only when the scope is fully defined, otherwise say it depends on the final scope.
+- If an answer depends on something I would need to check first (like a timeline for an unclear scope), give a reasonable answer and say I will confirm once I see the details.
 
 GOLD STANDARD EXAMPLE
 I WILL SHOW YOU A FREE REDESIGN LOOK OF YOUR HOMEPAGE FIRST... IF YOU LIKE THE DIRECTION, WE KEEP GOING. 😎
@@ -115,4 +119,5 @@ FINAL SELF CHECK (rewrite until every answer is yes)
 7. Zero contractions, zero dashes or hyphens, one small natural punctuation slip?
 8. Strong reason to message now, ending with one short question?
 9. Anti-bot word on the first line if the job asked for one, and the website list in the right order?
+10. No price or rate anywhere unless the client asked, and a number only if the scope is fully defined?
 If any answer is no, it is not 10/10. Rewrite it.
