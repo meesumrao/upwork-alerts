@@ -54,7 +54,7 @@ BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
 BACKFILL_LIMIT = 300
 SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
 # Har run ke baad status message: "every_run" (har 5 min), "hourly" (ghante mein ek), "off"
-STATUS_MESSAGES = (os.getenv("STATUS_MESSAGES") or "every_run").lower()
+STATUS_MESSAGES = (os.getenv("STATUS_MESSAGES") or "off").lower()
 
 MIN_FIXED = 250
 MIN_HIRE_RATE = 40        # is se upar
