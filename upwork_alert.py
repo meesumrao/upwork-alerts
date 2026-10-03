@@ -202,7 +202,8 @@ def job_to_text(job, info, est=None):
     if job["must_include"]:
         lines.append(f"Client's requirements for the proposal: {job['must_include']}")
     if est:
-        lines.append(f"MY PRICE ESTIMATE (use only if the client asks for a price, rate or quote, prefer the fixed price): "
+        lines.append(f"MY PRICE ESTIMATE (NEVER mention it unless the client asked for a price, rate or quote, and even then "
+                     f"only if the scope is fully defined, otherwise say it depends on the final scope): "
                      f"fixed {est.get('fixed', '?')} for about {est.get('hours', '?')} hours, or hourly {est.get('hourly', '?')}")
     lines += ["", "Description:", job["description"]]
     if job["questions"]:
@@ -293,6 +294,7 @@ Score the draft from 0 to 10 against EVERY rule. Check especially:
 - it reads like a person typed it word by word: no template phrases, no repeating the job post back, no arrows unless the job is truly a multi step workflow
 - capitals only at the start of sentences (plus "I" and short acronyms), no contractions, no dashes or hyphens
 - strong reason to reply ending with one short question, anti-bot word if asked, website list in the right order
+- NO price, rate or budget anywhere unless the client asked, and a number only if the scope is fully defined, otherwise "depends on the final scope"
 If it is not a 10/10, rewrite it until it is 10/10. When in doubt, make it SHORTER.
 Also check the screening answers with the same human style rules.
 
