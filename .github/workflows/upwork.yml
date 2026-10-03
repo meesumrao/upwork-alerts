@@ -33,4 +33,4 @@ jobs:
           AI_MODEL: ${{ vars.AI_MODEL }}
           SEND_SKIPPED: ${{ vars.SEND_SKIPPED }}
           BACKFILL_HOURS: ${{ inputs.backfill_hours }}
-          LAG_MINUTES: ${{ vars.LAG_MINUTES }}
+          STATUS_MESSAGES: ${{ vars.STATUS_MESSAGES }}
