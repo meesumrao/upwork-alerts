@@ -29,9 +29,18 @@ AI_MODEL = os.getenv("AI_MODEL") or "gpt-5.4"
 
 # ---------- Settings ----------
 ACTOR_ID = "hyperbach/upwork-scraper-ai"
-FEED_ID = "meesum-shopify"            # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
+FEED_ID = "meesum-shopify-v2"         # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
 STORE_NAME = "upwork-shopify-state"
-KEYWORDS = ["shopify"]                # ye lafz job ke TITLE ya SKILLS mein hona chahiye
+# Hyperbach se wahi jobs mangwao jin mein kahin bhi ye lafz hon (baaqi chhaant script karti hai)
+KEYWORDS = ["shopify", "ecommerce", "e-commerce", "e commerce"]
+
+# Rule 1: title ya skills mein shopify / ecommerce ho
+CORE_RE = re.compile(r"\bshopify\b|\be[\s\-\u2010\u2011]?commerce\b", re.I)
+# Rule 2: title mein in mein se koi kaam ho, aur job mein kahin bhi shopify / ecommerce ho
+ROLE_RE = re.compile(
+    r"\b(meta ads?|fb ads?|facebook ads?|tik ?tok ads?|instagram ads?|"
+    r"virtual assistants?|va|cust(?:omer)? services?|cust(?:omer)? support|"
+    r"managers?|management|operators?|operations?|list\w*|cro)\b", re.I)
 MY_COUNTRY = "Pakistan"
 LIMIT = 200                           # ek run mein max jobs (safety)
 FRESH_MAX_AGE_MIN = 120               # is se purani job normal run mein notify nahi hogi
@@ -126,14 +135,19 @@ def normalize(row):
 
 # ---------- Sharten ----------
 def keyword_match(job):
-    title = job["title"].lower()
-    skills = " ".join(job["skills"]).lower()
-    return any(k.lower() in title or k.lower() in skills for k in KEYWORDS)
+    title = job["title"]
+    skills = " ".join(job["skills"])
+    if CORE_RE.search(title) or CORE_RE.search(skills):
+        return True
+    if ROLE_RE.search(title):
+        everything = " ".join([title, skills, job["description"]])
+        return bool(CORE_RE.search(everything))
+    return False
 
 
 def check(job):
     if not keyword_match(job):
-        return False, "keyword title/skills mein nahi"
+        return False, "keyword rule match nahi"
     if not job["payment_verified"]:
         return False, "payment not verified"
     if (job["hire_rate"] or 0) <= MIN_HIRE_RATE:
@@ -173,6 +187,9 @@ def job_to_text(job, info):
         f"Skills: {', '.join(job['skills'])}",
         f"Experience level: {job['experience']}",
     ]
+    keywords = [job["title"]] + job["skills"]
+    lines.append("KEYWORDS TO USE in the proposal (job title words and every listed skill, worked in naturally): "
+                 + " | ".join(k for k in keywords if k))
     if job["anti_bot"]:
         lines.append(f"IMPORTANT - client asks to include this exact word/phrase at the start of the proposal: {job['anti_bot']}")
     if job["must_include"]:
@@ -399,7 +416,7 @@ def main():
     rows = fetch_jobs(client)
     print(f"Hyperbach ne {len(rows)} jobs di")
     limit = BACKFILL_LIMIT if BACKFILL_HOURS > 0 else LIMIT
-    first_feed_run = not state.get("hb_started")
+    first_feed_run = state.get("hb_feed") != FEED_ID
     if len(rows) >= limit and not (first_feed_run and BACKFILL_HOURS == 0):
         slack_text(f"⚠️ Limit ({limit}) poori ho gayi, kuch jobs miss ho sakti hain.")
 
@@ -447,9 +464,9 @@ def main():
                     notify_skipped(job, info, ai)
         except Exception as ex:
             print("Slack error:", ex)
-        kv.set_record("STATE", {**state, "seen": seen[-3000:], "hb_started": True})
+        kv.set_record("STATE", {**state, "seen": seen[-3000:], "hb_started": True, "hb_feed": FEED_ID})
 
-    state = {**state, "seen": seen[-3000:], "hb_started": True}
+    state = {**state, "seen": seen[-3000:], "hb_started": True, "hb_feed": FEED_ID}
     try:
         state = send_status(state, stats)
     except Exception as ex:
