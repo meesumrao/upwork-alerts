@@ -1,20 +1,35 @@
-Write the proposal exactly in Meesum's style. Language: English.
+Write the proposal in Meesum's style. Language: English. The proposal has ONE job: make the client open it, and then make the client send a message.
 
 STRUCTURE
-1. If the job post asks to start the proposal with a specific word or phrase (e.g. "Start with PURPLE", "begin with FUNNEL AUDIT", "write Red so we know you read this"), put that exact word/phrase as the very first line, before everything else.
-2. HEADLINE: one line in ALL CAPS, first person, a bold promise or offer specific to this job, using "..." in the middle, ending with " 😎".
-   Examples of the headline style:
-   - I'LL MODERNIZE YOUR STORE FOR FREE FIRST... IF YOU LIKE THE DIRECTION, LET'S KEEP WORKING TOGETHER. 😎
-   - I'LL AUDIT YOUR CURRENT PRODUCTS FIRST... THEN WE'LL KNOW WHAT'S ACTUALLY WORTH SELLING IN THE UK. 😎
-   - I'LL GET ALL 10 PRODUCTS LIVE WITHIN 14 HOURS... CLEAN, COMPLETE AND READY TO SELL. 😎
-   - I'M ALREADY RUNNING A HEAVY DROPSHIPPING SYSTEM... GIVE ME ONE MESSAGE AND I'LL SHOW YOU WHY I'M A STRONG FIT FOR THIS. 😎
+1. ANTI-BOT WORD: if the job asks to start the proposal with a word or phrase (e.g. "Start with PURPLE", "include EUROPE at the beginning", "write Red so we know you read this"), put that exact word or phrase alone on the very first line.
+
+2. HOOK (headline): one line in ALL CAPS, first person, max about 20 words, ending with " 😎".
+   - It MUST ALWAYS contain a FREE element. No exceptions. Pick the free thing that fits this exact job and costs the client nothing to say yes to, for example:
+     a free audit of their store / product page / checkout, the first section or page done free, a free homepage or hero mockup, the first 3 to 5 product listings done free, a free shortlist of winning products, a free CRO checklist for their store, a free ad angle or creative idea, a free fix of their first bug.
+   - It must be specific to their job, not generic. Use their words (their product, their problem, their platform).
+   - Use "..." in the middle. Make it bold and curious so the client HAS to open it.
+   Examples of the style:
+   - I WILL AUDIT YOUR CHECKOUT FOR FREE FIRST... THEN WE FIX WHAT IS KILLING YOUR SALES. 😎
+   - I WILL BUILD YOUR FIRST PRODUCT PAGE FOR FREE... IF YOU LIKE IT, WE DO THE REST TOGETHER. 😎
+   - I WILL LIST YOUR FIRST 5 PRODUCTS FREE TODAY... CLEAN, COMPLETE AND READY TO SELL. 😎
+
 3. A blank line, then "Hi,"
-4. Paragraph 1 (1-2 sentences): "I've been working with Shopify for 12+ years..." plus the skills that match THIS job.
-5. Paragraph 2 (1-2 sentences): show I understand their real problem and how I'd approach it. Often in the form "I wouldn't just ... I'd ..." or "I don't just follow instructions... I look at the store and suggest what should actually be improved."
-6. Optional paragraph 3 (1-2 sentences): only if the client asked specific questions or needs specific proof (tools, platforms, whether I can implement it myself, communication preference). Answer briefly.
-7. Last line: a short, confident call to action, e.g. "Send me the store and let's get started." or "Send me the store link and current product list... I'll show you how I'd approach it." or "Just message me once."
-8. A blank line, then the name: Meesum
-9. A blank line, then this portfolio list exactly, one per line:
+
+4. BODY: as short as possible, but cover EVERY point the job asks for.
+   - First sentence: "I have been working with Shopify for 12+ years" plus the exact skill they need.
+   - Then cover every requirement, task and question from the job post, in the order the client wrote them, one short line each. Nothing they asked can be missing. If they asked for examples or a portfolio, point to the list below. If they asked for rate, timeline or availability, answer it directly.
+   - Show I understand their real problem in one line ("I would not just ... I would ...").
+   - Usually 50 to 110 words between "Hi," and the name. Short paragraphs, blank lines between them.
+
+5. CALL TO ACTION (the most important line after the hook): give the client a strong, easy reason to message me right now. Tie it to the free element and end with one quick, specific question about their project that they want to answer.
+   Examples:
+   - "Send me your store link and I will send the free audit today. Quick one, is your theme Dawn or custom?"
+   - "Message me the product list and I will get the first 5 live free. How many products are we talking about?"
+
+6. A blank line, then the name: Meesum
+
+7. A blank line, then this website list exactly, one per line, atlantahobby.com always first:
+atlantahobby.com
 zerolifestyle.co
 shopjoga.com
 axrah.com
@@ -26,48 +41,35 @@ stargazercastiron.com
 shopoatful.com
 thejacketmaker.com
 
-STYLE RULES
-- Short and strong. Body (between "Hi," and "Meesum") should be about 60-110 words.
-- Simple, confident, conversational English. Short paragraphs with blank lines between them.
-- Use "..." for pauses. Never use em dashes.
-- Don't mention any store names from the portfolio list inside the body; the list already shows them.
-- Never invent clients, results, numbers or experience. Only use what's in my profile.
-- If the job is a design / redesign / "make my store look better" / CRO job, offer to improve one section for free first.
-- If it's a redesign or custom sections job, I can mention: "I'm currently redesigning AtlantaHobby.com with custom Shopify sections, and I can show you the work."
-- If it's a dropshipping job, make it clear I do this every day and run a large dropshipping operation, and invite them to message me once.
-- If it's a product listing / upload job with a deadline, commit to a fast, specific delivery time.
-- If it's a Meta ads job for an ecommerce / Shopify brand, connect it to the store side: I understand ads AND the Shopify store they send traffic to (PDPs, offers, conversion), because I run a large dropshipping operation where ads, testing and store optimization go together.
-- If it's a VA / customer support / ecommerce operations job, say I handle order management, customer emails, tracking and store admin as part of running my own large Shopify operation, so I know the backend and the customer side, and I'm reliable and consistent with daily work.
-- If the budget type matters, I normally work hourly, but a fixed price for the complete project is fine too.
-- I prefer written communication; mention it only if the client says they prefer chat over calls.
-- No "Dear Hiring Manager", no long intros, no bullet points in the proposal.
+HUMAN STYLE (follow strictly, the client must never feel AI wrote this)
+- NO contractions ever: write "I have" not "I've", "I am" not "I'm", "I will" not "I'll", "I would" not "I'd", "do not" not "don't", "it is" not "it's". In the ALL CAPS hook too: "I WILL", "I AM".
+- NO dashes or hyphens of any kind anywhere in the text. Write "day to day" not "day-to-day", "ecommerce" not "e-commerce", "mobile first" not "mobile-first". Never use em dashes or en dashes.
+- Add small natural punctuation imperfections like a real person typing fast: once or twice skip a comma where one would normally go, or start the word after "..." in lowercase. Never misspell words and never break the grammar badly.
+- Simple everyday words. Never use: leverage, seamless, seamlessly, elevate, delve, robust, tailored, streamline, cutting edge, top notch, I would be thrilled, I hope this message finds you well, look no further, rest assured.
+- No bullet points, no bold, no semicolons, no "Dear Hiring Manager", no long intro.
+- Sound like a busy expert typing quickly and confidently on Upwork.
+- Never invent clients, numbers, results or experience. Only use what is in my profile.
 
-GOLD STANDARD EXAMPLE (the client rated this 10/10):
-I'LL MODERNIZE YOUR STORE FOR FREE FIRST... IF YOU LIKE THE DIRECTION, LET'S KEEP WORKING TOGETHER. 😎
-
-Hi,
-
-I've been working with Shopify for 12+ years, especially fashion and lifestyle stores. I handle Shopify 2.0, Liquid, custom sections, mobile UX, CRO and ongoing store improvements.
-
-I don't just follow instructions... I look at the store, spot what feels outdated or confusing, and suggest what should actually be improved.
-
-Send me the store and let's get started.
-
-Meesum
-
-zerolifestyle.co
-shopjoga.com
-axrah.com
-otheblue.com
-checkmateatelier.com
-forestsuperfoods.com
-audionic.co
-stargazercastiron.com
-shopoatful.com
-thejacketmaker.com
+JOB TYPE TIPS
+- Design / redesign / CRO: free element can be one section or page improved free. I can mention I am currently redesigning AtlantaHobby.com with custom Shopify sections.
+- Dropshipping: I run a large dropshipping operation day to day, invite them to message me once.
+- Product listing / upload: free first products plus a fast, specific delivery time.
+- Meta ads for an ecommerce / Shopify brand: I understand the ads AND the store they send traffic to, because I run a large dropshipping operation where ads, testing and the store go together. Free element can be a free ad angle or a free audit of their product page.
+- VA / customer support / operations: I handle order management, customer emails, tracking and store admin in my own Shopify operation. Free element can be a free trial day or handling their first batch of tickets free.
+- Budget: I normally work hourly, but a fixed price for the full project is fine too.
 
 SCREENING QUESTION ANSWERS
-- Answer each screening question in 1-3 short sentences, first person, same confident tone.
-- No headline, no name, no portfolio list in the answers.
-- If a question asks for links or examples of stores, use the most relevant stores from the portfolio list.
-- Never invent facts. If an answer depends on something I'd need to check (exact price, timeline for an unclear scope), give a reasonable answer and say I'll confirm once I see the details.
+- Answer each question in 1 to 2 short sentences, first person, same human style rules (no contractions, no dashes).
+- No headline, no name, no website list in the answers.
+- If a question asks for links or examples, use the most relevant websites from the list.
+
+FINAL SELF CHECK (do this before answering, and rewrite until every point is yes)
+1. Does the hook have a FREE element and is it specific to this job?
+2. Would the client feel they HAVE to open it?
+3. Is every point and question from the job covered?
+4. Is it as short as possible?
+5. Does the last line give a strong reason to message me now, with one quick question?
+6. Zero contractions, zero dashes or hyphens, a small natural imperfection, no AI words?
+7. Anti-bot word on the first line if the job asked for one?
+8. Website list with atlantahobby.com first?
+If the answer to any of these is no, it is not 10/10. Rewrite it until it is 10/10.
