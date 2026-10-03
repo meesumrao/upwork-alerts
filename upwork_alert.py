@@ -488,12 +488,11 @@ def send_status(state, stats):
         return {**state, "status_totals": total}
     local = now.astimezone(PKT)
     stamp = f"{local.day} {local.strftime('%b')}, {local.strftime('%I:%M %p').lstrip('0')}"
-    period = "pichle ghante" if STATUS_MESSAGES == "hourly" else "is check"
     if total["new"] == 0:
-        msg = f"🔍 {stamp}: {period} mein koi nayi job nahi mili"
+        msg = f"🔍 {stamp}: No New Jobs 🙁"
     else:
-        msg = (f"🔍 {stamp}: {period} mein {total['new']} nayi jobs  |  "
-               f"{total['fail']} sharton pe fail  |  {total['skip']} skip  |  {total['apply']} apply")
+        msg = (f"🔍 {stamp}: {total['new']} New Jobs  |  {total['fail']} Fail  |  "
+               f"{total['skip']} Skip  |  {total['apply']} Apply")
     slack_text(msg)
     return {**state, "status_totals": {"new": 0, "fail": 0, "skip": 0, "apply": 0},
             "status_last": now.isoformat()}
