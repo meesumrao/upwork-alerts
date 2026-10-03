@@ -38,6 +38,8 @@ FRESH_MAX_AGE_MIN = 120               # is se purani job normal run mein notify 
 BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
 BACKFILL_LIMIT = 300
 SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
+# Har run ke baad status message: "every_run" (har 5 min), "hourly" (ghante mein ek), "off"
+STATUS_MESSAGES = (os.getenv("STATUS_MESSAGES") or "every_run").lower()
 
 MIN_FIXED = 250
 MIN_HIRE_RATE = 40        # is se upar
@@ -154,8 +156,10 @@ def money_text(job):
     if job["kind"] == "fixed":
         return f"Fixed ${job['fixed_budget'] or 0:,.0f}"
     lo, hi = job["hourly_min"], job["hourly_max"]
+    if lo and hi and lo != hi:
+        return f"Hourly ${lo:,.0f}-${hi:,.0f}/hr"
     if lo or hi:
-        return f"Hourly ${lo or 0:,.0f}-${hi or 0:,.0f}/hr"
+        return f"Hourly ${(lo or hi):,.0f}/hr"
     return "Hourly (rate not given)"
 
 
@@ -395,9 +399,11 @@ def main():
     rows = fetch_jobs(client)
     print(f"Hyperbach ne {len(rows)} jobs di")
     limit = BACKFILL_LIMIT if BACKFILL_HOURS > 0 else LIMIT
-    if len(rows) >= limit:
+    first_feed_run = not state.get("hb_started")
+    if len(rows) >= limit and not (first_feed_run and BACKFILL_HOURS == 0):
         slack_text(f"⚠️ Limit ({limit}) poori ho gayi, kuch jobs miss ho sakti hain.")
 
+    stats = {"new": 0, "fail": 0, "skip": 0, "apply": 0}
     jobs = sorted((normalize(r) for r in rows), key=lambda j: j["posted"] or "")
     for job in jobs:
         uid = job["uid"]
@@ -411,8 +417,10 @@ def main():
             print(f"Purani job, chhod di ({ago} min): {job['title'][:50]}")
             continue
 
+        stats["new"] += 1
         ok, info = check(job)
         if not ok:
+            stats["fail"] += 1
             print(f"Sharten fail: {job['title'][:50]} ({info})")
             continue
         try:
@@ -430,17 +438,48 @@ def main():
             continue
         try:
             if ai.get("apply"):
+                stats["apply"] += 1
                 notify(job, info, ai)
             else:
+                stats["skip"] += 1
                 print(f"AI skip: {job['title'][:50]} ({ai.get('reason')})")
                 if SEND_SKIPPED:
                     notify_skipped(job, info, ai)
         except Exception as ex:
             print("Slack error:", ex)
-        kv.set_record("STATE", {"seen": seen[-3000:]})
+        kv.set_record("STATE", {**state, "seen": seen[-3000:], "hb_started": True})
 
-    kv.set_record("STATE", {"seen": seen[-3000:]})
-    print("Done")
+    state = {**state, "seen": seen[-3000:], "hb_started": True}
+    try:
+        state = send_status(state, stats)
+    except Exception as ex:
+        print("Status message error:", ex)
+    kv.set_record("STATE", state)
+    print(f"Done: {stats}")
+
+
+def send_status(state, stats):
+    """Run ka chhota sa hisaab Slack pe, taake pata rahe system chal raha hai."""
+    if STATUS_MESSAGES == "off" or BACKFILL_HOURS > 0:
+        return state
+    total = state.get("status_totals") or {"new": 0, "fail": 0, "skip": 0, "apply": 0}
+    for k in total:
+        total[k] += stats[k]
+    now = datetime.now(timezone.utc)
+    last = parse_time(state.get("status_last")) if state.get("status_last") else None
+    if STATUS_MESSAGES == "hourly" and last and (now - last).total_seconds() < 3600:
+        return {**state, "status_totals": total}
+    local = now.astimezone(PKT)
+    stamp = f"{local.day} {local.strftime('%b')}, {local.strftime('%I:%M %p').lstrip('0')}"
+    period = "pichle ghante" if STATUS_MESSAGES == "hourly" else "is check"
+    if total["new"] == 0:
+        msg = f"🔍 {stamp}: {period} mein koi nayi job nahi mili"
+    else:
+        msg = (f"🔍 {stamp}: {period} mein {total['new']} nayi jobs  |  "
+               f"{total['fail']} sharton pe fail  |  {total['skip']} skip  |  {total['apply']} apply")
+    slack_text(msg)
+    return {**state, "status_totals": {"new": 0, "fail": 0, "skip": 0, "apply": 0},
+            "status_last": now.isoformat()}
 
 
 if __name__ == "__main__":
