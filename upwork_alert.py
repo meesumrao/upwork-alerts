@@ -32,10 +32,10 @@ ACTOR_ID = "hyperbach/upwork-scraper-ai"
 FEED_ID = "meesum-shopify-v2"         # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
 STORE_NAME = "upwork-shopify-state"
 # Hyperbach se wahi jobs mangwao jin mein kahin bhi ye lafz hon (baaqi chhaant script karti hai)
-KEYWORDS = ["shopify", "ecommerce", "e-commerce", "e commerce"]
+KEYWORDS = ["shopify", "shopifyplus", "ecommerce", "e-commerce", "e commerce"]
 
 # Rule 1: title ya skills mein shopify / ecommerce ho
-CORE_RE = re.compile(r"\bshopify\b|\be[\s\-\u2010\u2011]?commerce\b", re.I)
+CORE_RE = re.compile(r"shopify|\be[\s\-\u2010\u2011]?commerce", re.I)
 # Rule 2: title mein in mein se koi kaam ho, aur job mein kahin bhi shopify / ecommerce ho
 ROLE_RE = re.compile(
     r"\b(meta ads?|fb ads?|facebook ads?|tik ?tok ads?|instagram ads?|"
@@ -44,6 +44,12 @@ ROLE_RE = re.compile(
 MY_COUNTRY = "Pakistan"
 LIMIT = 200                           # ek run mein max jobs (safety)
 FRESH_MAX_AGE_MIN = 120               # is se purani job normal run mein notify nahi hogi
+
+# Backup: Hyperbach se chhooti jobs pakadne ke liye Black Falcon (seedha Upwork live search)
+BACKUP_ACTOR = "blackfalcondata/upwork-scraper"
+BACKUP_EVERY_MIN = int(os.getenv("BACKUP_EVERY_MIN") or "15")   # 0 = backup band
+BACKUP_MAX_AGE_MIN = 240              # backup sirf itni purani jobs dekhta hai
+BACKUP_QUERY = "shopify OR shopifyplus OR ecommerce OR \"e-commerce\" OR \"e commerce\""
 BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
 BACKFILL_LIMIT = 300
 SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
@@ -130,6 +136,7 @@ def normalize(row):
         "must_include": row.get("ai_specific_requirements_before_applying"),
         "allowed_countries": row.get("qual_countries"),
         "posted": row.get("date_posted"),
+        "source": row.get("_source") or "feed",
     }
 
 
@@ -178,7 +185,7 @@ def money_text(job):
 
 
 # ---------- AI ----------
-def job_to_text(job, info):
+def job_to_text(job, info, est=None):
     lines = [
         f"Title: {job['title']}",
         f"Budget: {money_text(job)}",
@@ -188,16 +195,56 @@ def job_to_text(job, info):
         f"Experience level: {job['experience']}",
     ]
     keywords = [job["title"]] + job["skills"]
-    lines.append("KEYWORDS TO USE in the proposal (job title words and every listed skill, worked in naturally): "
-                 + " | ".join(k for k in keywords if k))
+    lines.append("KEYWORDS from the job title and skills (use them inside normal sentences, max 2 per sentence, "
+                 "NEVER as a comma list, skip any that do not fit naturally): " + " | ".join(k for k in keywords if k))
     if job["anti_bot"]:
         lines.append(f"IMPORTANT - client asks to include this exact word/phrase at the start of the proposal: {job['anti_bot']}")
     if job["must_include"]:
         lines.append(f"Client's requirements for the proposal: {job['must_include']}")
+    if est:
+        lines.append(f"MY PRICE ESTIMATE (use only if the client asks for a price, rate or quote, prefer the fixed price): "
+                     f"fixed {est.get('fixed', '?')} for about {est.get('hours', '?')} hours, or hourly {est.get('hourly', '?')}")
     lines += ["", "Description:", job["description"]]
     if job["questions"]:
         lines += ["", "Screening questions:"] + [f"{i}. {q}" for i, q in enumerate(job["questions"], 1)]
     return "\n".join(lines)
+
+
+ESTIMATE_PROMPT = """You price Upwork jobs for Meesum, a Shopify and ecommerce expert with 12+ years of experience.
+You are NOT shown the client's budget on purpose. Judge only from the work itself.
+Estimate how many hours an experienced freelancer would really need, and a fair, competitive Upwork price for
+this work: a fixed price for the whole job and an hourly rate. Be realistic for the Upwork market, not too high, not too low.
+For ongoing roles (VA, support, ads management, store manager) give the hourly rate and a fixed price per month at the
+likely weekly hours.
+
+Respond ONLY with a JSON object, no other text:
+{"hours": "e.g. 8-12 (or e.g. 20/week for ongoing)",
+ "fixed": "e.g. $300-400 (or e.g. $1,200/month for ongoing)",
+ "hourly": "e.g. $25-35/hr",
+ "best": "fixed or hourly",
+ "why": "max 10 words"}"""
+
+
+def estimate_rate(job):
+    """Budget dikhaye baghair, sirf kaam dekh ke rate ka andaza."""
+    lines = [f"Title: {job['title']}", f"Skills: {', '.join(job['skills'])}",
+             f"Experience level: {job['experience']}", f"Job type the client chose: {job['kind']}",
+             "", "Description:", job["description"]]
+    if job["questions"]:
+        lines += ["", "Screening questions:"] + [f"- {q}" for q in job["questions"]]
+    r = requests.post(
+        f"{AI_BASE_URL.rstrip('/')}/chat/completions",
+        headers={"Authorization": f"Bearer {AI_API_KEY}"},
+        json={"model": AI_MODEL,
+              "messages": [{"role": "system", "content": ESTIMATE_PROMPT},
+                           {"role": "user", "content": "\n".join(lines)}],
+              "response_format": {"type": "json_object"}},
+        timeout=90,
+    )
+    r.raise_for_status()
+    content = r.json()["choices"][0]["message"]["content"].strip()
+    content = content.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    return json.loads(content)
 
 
 SYSTEM_PROMPT = f"""You evaluate Upwork jobs for a freelancer and write proposals.
@@ -211,7 +258,8 @@ SYSTEM_PROMPT = f"""You evaluate Upwork jobs for a freelancer and write proposal
 Respond ONLY with a JSON object, no other text:
 {{"apply": true or false,
   "score": integer 0-10 (how good a fit),
-  "reason": "very short reason, max 12 words",
+  "summary": "2 to 3 short plain sentences: what the client needs, the main tasks or deliverables, and any timeline, tool or special requirement",
+  "reason": "very short reason for the decision, max 12 words",
   "proposal": "full proposal text if apply is true, otherwise empty string",
   "screening_answers": ["one answer per screening question, empty list if none"]}}"""
 
@@ -237,8 +285,15 @@ REVIEW_PROMPT = f"""You are a strict Upwork proposal editor. You check a draft p
 ## Rules the proposal must follow:
 {PROPOSAL_FORMAT}
 
-Score the draft from 0 to 10 against EVERY rule (free element in the hook, every point from the job covered, shortness, human style, no dashes or hyphens, no contractions, strong reason to reply, portfolio list order, anti-bot word if asked).
-If it is not a 10/10, rewrite it until it is 10/10. Keep what is already good.
+Score the draft from 0 to 10 against EVERY rule. Check especially:
+- the WHOLE hook is in capital letters and has a small free element that fits the job type
+- it is as SHORT as possible (usually 30 to 70 words in the body) but every question and request from the job is answered
+- only 2 to 3 short body paragraphs plus the call to action, no sentence alone on its own line
+- title and skill keywords are used naturally inside sentences, never as a comma list, max 2 per sentence
+- it reads like a person typed it word by word: no template phrases, no repeating the job post back, no arrows unless the job is truly a multi step workflow
+- capitals only at the start of sentences (plus "I" and short acronyms), no contractions, no dashes or hyphens
+- strong reason to reply ending with one short question, anti-bot word if asked, website list in the right order
+If it is not a 10/10, rewrite it until it is 10/10. When in doubt, make it SHORTER.
 Also check the screening answers with the same human style rules.
 
 Respond ONLY with a JSON object, no other text:
@@ -311,6 +366,44 @@ CONTRACTIONS = {"I'm": "I am", "I've": "I have", "I'll": "I will", "I'd": "I wou
 DOMAIN_LINE = re.compile(r"^\s*\S+\.\S+\s*$")
 
 
+WORD_RE = re.compile(r"[A-Za-z][A-Za-z']*")
+SENT_END_RE = re.compile(r"(?<!\.)[.?!][\"')]*\s+$")
+
+
+def sentence_case(line):
+    """Capital sirf jumle ke shuru mein (aur 'I' aur CRO/SEO jaise chhote acronyms), baaqi sab chhota."""
+    def fix(m):
+        word = m.group(0)
+        before = line[:m.start()]
+        if word == "I" or word.startswith("I'"):
+            return word
+        if word.isupper() and 2 <= len(word) <= 6:
+            return word                                   # CRO, SEO, COD, AWB, API
+        if before.strip() == "" or SENT_END_RE.search(before):
+            return word[0].upper() + word[1:].lower()      # jumle ka pehla lafz
+        return word.lower()
+    return WORD_RE.sub(fix, line)
+
+
+def format_proposal(text, anti_bot=None):
+    """Hook poora CAPS mein, body mein capital sirf jumlon ke shuru mein."""
+    lines = text.split("\n")
+    hi_idx = next((i for i, l in enumerate(lines) if re.match(r"\s*hi\b", l, re.I)), None)
+    name_idx = next((i for i, l in enumerate(lines) if l.strip().lower() == "meesum"), len(lines))
+    out = []
+    for i, line in enumerate(lines):
+        if hi_idx is not None and i < hi_idx:
+            if anti_bot and line.strip().lower() == str(anti_bot).strip().lower():
+                out.append(line)                           # client ka maanga hua lafz waisa hi
+            else:
+                out.append(line.upper())                   # poora hook CAPS
+        elif hi_idx is not None and hi_idx < i < name_idx:
+            out.append(sentence_case(line))
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
 def humanize(text):
     """Proposal copy-ready: emoji nahi, dash/hyphen nahi, I'm/I've waghera poore."""
     text = strip_emoji(text).replace("\u2019", "'")
@@ -341,7 +434,7 @@ def posted_text(job):
     return f"⏱ Posted {ago} min ago ({stamp})"
 
 
-def job_lines(job, info, ai, label):
+def job_lines(job, info, ai, label, est=None):
     lines = [
         f"{label} *{esc(job['title'])}*",
         f"💰 {esc(money_text(job))}  |  ⭐ {ai.get('score', '?')}/10  |  🏢 {esc(job['country'])}",
@@ -349,30 +442,38 @@ def job_lines(job, info, ai, label):
         f"{job['hire_rate']:.0f}% hire rate",
     ]
     extra = [posted_text(job)]
+    if job.get("source") == "backup":
+        extra.append("🛟 Backup")
     if job["applicants"] is not None:
         extra.append(f"👥 {job['applicants']} proposals")
     lines.append("  |  ".join(e for e in extra if e))
+    if ai.get("summary"):
+        lines.append(f"📝 {esc(ai['summary'])}")
+    if est:
+        best = str(est.get("best", "")).lower()
+        lines.append(f"💵 AI rate: Fixed {esc(est.get('fixed', '?'))} (~{esc(est.get('hours', '?'))} hrs)  |  "
+                     f"Hourly {esc(est.get('hourly', '?'))}" + (f"  |  Best: {esc(best)}" if best else ""))
     lines.append(f"🧠 {esc(ai.get('reason', ''))}")
     return lines
 
 
-def notify(job, info, ai):
-    slack_job(job_lines(job, info, ai, "✅ Apply:"), job["url"])
+def notify(job, info, ai, est=None):
+    slack_job(job_lines(job, info, ai, "✅ Apply:", est), job["url"])
     # Proposal aur screening Q&A ek hi message mein (long-press -> Copy text)
-    text = humanize(ai.get("proposal", ""))
+    text = format_proposal(humanize(ai.get("proposal", "")), job.get("anti_bot"))
     answers = ai.get("screening_answers") or []
     if answers:
         qs = job["questions"]
         qa = []
         for i, ans in enumerate(answers):
             q = qs[i] if i < len(qs) else f"Question {i + 1}"
-            qa.append(f"Q: {q}\nA: {humanize(str(ans))}")
+            qa.append(f"Q: {q}\nA: {sentence_case(humanize(str(ans)))}")
         text += "\n\n\n" + "\n\n".join(qa)
     slack_text(text)
 
 
-def notify_skipped(job, info, ai):
-    slack_job(job_lines(job, info, ai, "⏭ Skipped:"), job["url"])
+def notify_skipped(job, info, ai, est=None):
+    slack_job(job_lines(job, info, ai, "⏭ Skipped:", est), job["url"])
 
 
 # ---------- Main ----------
@@ -396,13 +497,80 @@ def fetch_jobs(client):
         # Har run sirf pichle run ke baad aayi jobs deta hai, har job ka ek hi dafa bill
         run_input.update({"notifications_only": True, "limit": LIMIT})
 
-    run = client.actor(ACTOR_ID).call(run_input=run_input, timeout_secs=240)
+    return run_actor(client, ACTOR_ID, run_input)
+
+
+def run_actor(client, actor_id, run_input, timeout=240):
+    run = client.actor(actor_id).call(run_input=run_input, timeout_secs=timeout)
     if not run_ok(run):
-        raise RuntimeError(f"Actor run fail: {field(run, 'status')}")
+        raise RuntimeError(f"{actor_id} run fail: {field(run, 'status')}")
     dataset_id = field(run, "defaultDatasetId", "default_dataset_id")
     items = field(client.dataset(dataset_id).list_items(), "items") or []
     return [i if isinstance(i, dict) else (i.model_dump() if hasattr(i, "model_dump") else dict(i))
             for i in items]
+
+
+def upwork_id(row):
+    """Har scraper ki job ID ek hi shakal mein: ~ ke baad wala hissa (02...)."""
+    for key in ("url", "portalUrl", "externalLink"):
+        m = re.search(r"~(0\d{10,})", str(row.get(key) or ""))
+        if m:
+            return m.group(1)
+    jid = str(row.get("jobId") or row.get("id") or "")
+    if jid.isdigit():
+        return jid if jid.startswith("02") else "02" + jid
+    return None
+
+
+def backup_prefilter(row):
+    """Black Falcon ke data pe pehli chhalni, taake sirf kaam ki jobs ka poora data mangwayein."""
+    skills = row.get("skills") or []
+    if isinstance(skills, str):
+        skills = [x.strip() for x in skills.split(",")]
+    mini = {"title": row.get("title") or "", "skills": skills,
+            "description": row.get("description") or row.get("descriptionMarkdown") or ""}
+    if not keyword_match(mini):
+        return False
+    if row.get("clientPaymentVerified") is False:
+        return False
+    spent = num(row.get("clientTotalSpent"))
+    if spent is not None and spent < MIN_SPENT_PER_HIRE:
+        return False
+    if "FIXED" in str(row.get("jobType") or "").upper():
+        budget = num(row.get("budgetAmount"))
+        if budget is not None and budget < MIN_FIXED:
+            return False
+    return True
+
+
+def fetch_backup(client, known_ids):
+    """Black Falcon se nayi jobs, phir jo chhooti hon un ka poora data Hyperbach se (link ke zariye)."""
+    bf_rows = run_actor(client, BACKUP_ACTOR, {
+        "query": BACKUP_QUERY,
+        "sort": "recency",
+        "verifiedPaymentOnly": True,
+        "minClientTotalSpent": MIN_SPENT_PER_HIRE,
+        "maxAgeMinutes": BACKUP_MAX_AGE_MIN,
+        "maxResults": 100,
+        "incrementalMode": True,
+        "stateKey": "meesum-backup-v1",
+        "descriptionFormat": "text",
+    })
+    missed = []
+    for row in bf_rows:
+        jid = upwork_id(row)
+        if jid and jid not in known_ids and backup_prefilter(row):
+            missed.append(jid)
+    missed = list(dict.fromkeys(missed))
+    print(f"Backup: Black Falcon ne {len(bf_rows)} jobs di, {len(missed)} chhooti hui lag rahi hain")
+    full = []
+    for i in range(0, len(missed), 50):
+        rows = run_actor(client, ACTOR_ID, {"refresh_job_ids": missed[i:i + 50],
+                                            "refresh_shape": "flat", "whats_new": False})
+        for r in rows:
+            r["_source"] = "backup"
+        full += rows
+    return full
 
 
 def main():
@@ -420,7 +588,19 @@ def main():
     if len(rows) >= limit and not (first_feed_run and BACKFILL_HOURS == 0):
         slack_text(f"⚠️ Limit ({limit}) poori ho gayi, kuch jobs miss ho sakti hain.")
 
-    stats = {"new": 0, "fail": 0, "skip": 0, "apply": 0}
+    # Backup har BACKUP_EVERY_MIN minute (main feed se chhooti jobs)
+    now = datetime.now(timezone.utc)
+    last_backup = parse_time(state.get("backup_last")) if state.get("backup_last") else None
+    if (BACKUP_EVERY_MIN > 0 and BACKFILL_HOURS == 0 and
+            (not last_backup or (now - last_backup).total_seconds() >= BACKUP_EVERY_MIN * 60 - 90)):
+        try:
+            feed_ids = {str(r.get("id")) for r in rows}
+            rows += fetch_backup(client, seen_set | feed_ids)
+            state["backup_last"] = now.isoformat()
+        except Exception as ex:
+            print("Backup error (main feed par asar nahi):", ex)
+
+    stats = {"new": 0, "fail": 0, "skip": 0, "apply": 0, "backup": 0}
     jobs = sorted((normalize(r) for r in rows), key=lambda j: j["posted"] or "")
     for job in jobs:
         uid = job["uid"]
@@ -430,18 +610,26 @@ def main():
         seen_set.add(uid)
 
         ago = minutes_ago(job["posted"])
-        if BACKFILL_HOURS == 0 and ago is not None and ago > FRESH_MAX_AGE_MIN:
+        max_age = BACKUP_MAX_AGE_MIN if job["source"] == "backup" else FRESH_MAX_AGE_MIN
+        if BACKFILL_HOURS == 0 and ago is not None and ago > max_age:
             print(f"Purani job, chhod di ({ago} min): {job['title'][:50]}")
             continue
 
         stats["new"] += 1
+        if job["source"] == "backup":
+            stats["backup"] += 1
         ok, info = check(job)
         if not ok:
             stats["fail"] += 1
             print(f"Sharten fail: {job['title'][:50]} ({info})")
             continue
+        est = None
         try:
-            text = job_to_text(job, info)
+            est = estimate_rate(job)
+        except Exception as ex:
+            print("Rate estimate error:", ex)
+        try:
+            text = job_to_text(job, info, est)
             ai = ask_ai(text)
             if ai.get("apply"):
                 try:
@@ -456,12 +644,12 @@ def main():
         try:
             if ai.get("apply"):
                 stats["apply"] += 1
-                notify(job, info, ai)
+                notify(job, info, ai, est)
             else:
                 stats["skip"] += 1
                 print(f"AI skip: {job['title'][:50]} ({ai.get('reason')})")
                 if SEND_SKIPPED:
-                    notify_skipped(job, info, ai)
+                    notify_skipped(job, info, ai, est)
         except Exception as ex:
             print("Slack error:", ex)
         kv.set_record("STATE", {**state, "seen": seen[-3000:], "hb_started": True, "hb_feed": FEED_ID})
@@ -479,9 +667,10 @@ def send_status(state, stats):
     """Run ka chhota sa hisaab Slack pe, taake pata rahe system chal raha hai."""
     if STATUS_MESSAGES == "off" or BACKFILL_HOURS > 0:
         return state
-    total = state.get("status_totals") or {"new": 0, "fail": 0, "skip": 0, "apply": 0}
+    total = {"new": 0, "fail": 0, "skip": 0, "apply": 0, "backup": 0}
+    total.update(state.get("status_totals") or {})
     for k in total:
-        total[k] += stats[k]
+        total[k] += stats.get(k, 0)
     now = datetime.now(timezone.utc)
     last = parse_time(state.get("status_last")) if state.get("status_last") else None
     if STATUS_MESSAGES == "hourly" and last and (now - last).total_seconds() < 3600:
@@ -493,8 +682,10 @@ def send_status(state, stats):
     else:
         msg = (f"🔍 {stamp}: {total['new']} New Jobs  |  {total['fail']} Fail  |  "
                f"{total['skip']} Skip  |  {total['apply']} Apply")
+        if total["backup"]:
+            msg += f"  |  🛟 {total['backup']} Backup"
     slack_text(msg)
-    return {**state, "status_totals": {"new": 0, "fail": 0, "skip": 0, "apply": 0},
+    return {**state, "status_totals": {"new": 0, "fail": 0, "skip": 0, "apply": 0, "backup": 0},
             "status_last": now.isoformat()}
 
 
