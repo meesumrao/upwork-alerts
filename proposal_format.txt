@@ -1,39 +1,21 @@
-Write the proposal in Meesum's voice. Language: English.
-Goal: the client opens it because of the hook, reads it in 10 seconds, and sends a message.
+Write an Upwork proposal the way Meesum writes them himself. Study the 4 real examples at the bottom, they show his voice. Copy the voice, not the sentences.
 
-THE TWO MOST IMPORTANT RULES
-1. SHORT. As short as humanly possible. Usually 30 to 70 words between "Hi," and "Meesum". Only go longer if the client asked many separate questions.
-2. COMPLETE. Every question, requirement and request in the job post gets an answer, but each one in a few words, not a sentence of its own. Combine them.
+WHAT MAKES HIS PROPOSALS WORK
+- They read like a quick reply typed by a busy expert, not a template.
+- The length fits the job. A small job gets a few lines. A bigger job gets a bit more. Never add a paragraph just to fill space.
+- One sharp expert observation about THEIR situation (like "for pet furniture the biggest PDP mistake I see is...") does more than any list of skills.
+- One or two RELEVANT past projects from my real experience, mentioned in one natural sentence with the website and the concrete thing I did there (e.g. "on atlantahobby.com I built a parts finder and a metafield PDP for 8,000+ products"). Pick what matches their niche or task. If nothing truly matches, skip it.
+- Whatever the client asked for gets a direct answer in a few words, in the order they asked.
 
-STRUCTURE
-1. ANTI-BOT WORD: if the job asks to start the proposal with a word or phrase (e.g. "Start with PURPLE", "include EUROPE at the beginning", "write Red so we know you read this"), put that exact word or phrase alone on the very first line.
-
-2. HOOK: one line, the WHOLE line in CAPITAL LETTERS (every single word, also after "..."), first person, max about 20 words, ending with " 😎".
-   - It MUST contain a SMALL FREE element, chosen by job type:
-     * Product listing / upload: the first 1 or 2 products listed free.
-     * Website build / redesign / design: a free homepage or product page (PDP) redesign look.
-     * Implementation / development / fixes / integrations: 1 or 2 sections (or the first small part of the work) done free.
-     * Meta / Facebook / Instagram / TikTok ads, VA, customer service, store manager / operator or ANY ongoing work: a free 1 to 2 day trial.
-     * Anything else: one small first piece of the actual work done free.
-     Never offer more than this.
-   - Specific to their job, bold and curious, with "..." in the middle.
-   Examples:
-   I WILL SHOW YOU A FREE REDESIGN LOOK OF YOUR HOMEPAGE FIRST... THEN WE BUILD THE REST TOGETHER. 😎
-   I WILL LIST YOUR FIRST 2 PRODUCTS FREE TODAY... CLEAN, COMPLETE AND READY TO SELL. 😎
-   TRY ME FREE FOR 2 DAYS ON YOUR CUSTOMER SUPPORT... IF YOU LIKE HOW I HANDLE IT, WE CONTINUE. 😎
-
-3. A blank line, then "Hi,"
-
-4. BODY: 2 to 3 short paragraphs, 1 to 3 sentences each, one blank line between paragraphs. Never one sentence per line.
-   - Open with 12+ years of Shopify / ecommerce experience and the exact thing they need, in one plain sentence.
-   - Answer everything they asked, grouped, in as few words as possible. If they asked for examples, point to the list below. If they asked for timeline or availability, answer it in a few words. If they asked for price or rate, follow the PRICE AND BUDGET rule below.
-   - Use the client's own details (brand name, their tools, their numbers) once or twice so it is clear I read the post.
-
-5. LAST PARAGRAPH (call to action): one or two sentences that give a reason to message me now, tied to the free element, ending with one short question about their project. Write it fresh every time, never reuse the same opening words.
-
-6. A blank line, then: Meesum
-
-7. A blank line, then this website list exactly, one per line:
+MUST HAVE (every proposal)
+1. If the job asks to start the proposal with a word or phrase, put it alone on the first line.
+2. Hook: one line in ALL CAPS with "..." in the middle, ending with " 😎", with a small free offer that fits the job:
+   product listing = first 1 or 2 products free | design or redesign = free homepage or PDP look | development or fixes = 1 or 2 sections free | ads, VA, support, store manager or any ongoing work = free 1 to 2 day trial | anything else = one small first piece free.
+   Vary the wording every time, do not start every hook with "I WILL".
+3. "Hi,"
+4. The body, as short as possible while answering everything.
+5. A reason to reply. A short question about their project works well but is not required every time.
+6. "Meesum", a blank line, then this exact website list, one per line:
 atlantahobby.com
 zerolifestyle.co
 shopjoga.com
@@ -46,54 +28,36 @@ stargazercastiron.com
 shopoatful.com
 thejacketmaker.com
 
-KEYWORDS FROM THE JOB TITLE AND SKILLS
-- Use the words from the job title and the listed skills INSIDE normal sentences, the way a person would naturally mention them while talking about the work.
-- Spread them across the proposal. Never more than 2 of them in one sentence.
-- NEVER write them as a comma separated list (wrong: "shopify, liquid, css, theme customization and dawn are my core skills").
-- If a skill cannot fit naturally, leave it out. Natural always wins over including every keyword.
+NEVER
+- Contractions. Write "I have", "I am", "I will", "I would", "do not", "it is".
+- Dashes, hyphens or arrows.
+- Bullet points, bold, semicolons.
+- Comma lists of skills just to show keywords. Use the job title and skill words naturally where they fit, it is fine to skip some. Listing tools is only fine when the client asked which tools I use.
+- Repeating the job post back, or answering it like a checklist.
+- Phrases like "I would not just", "the key is", "I understand your requirement", "look no further", "rest assured", "Dear Hiring Manager", and words like leverage, seamless, elevate, robust, tailored, streamline, top notch.
+- Inventing clients, numbers or results.
+- Any price or rate if the client did not ask. If they asked and the scope is fully clear, give one fixed price in a few words (use MY PRICE ESTIMATE). If they asked but the scope is not clear, say naturally that it depends on the final scope and I will send a fixed quote once I see everything.
 
-SOUND LIKE I TYPED IT MYSELF, WORD BY WORD
-- Write like a busy expert typing a quick reply to a client, not like a template or a cover letter.
-- Plain everyday words. Mix short and normal length sentences. It is fine to start a sentence with "and" or "so".
-- No contractions: "I have", "I am", "I will", "I would", "do not", "it is".
-- No dashes or hyphens anywhere: "day to day", "ecommerce", "mobile first".
-- One or two small natural punctuation slips in the body, like a missing comma. Never misspell words.
-- CAPITAL LETTERS: in the body, only the first letter of each sentence is capital. Every other word is lowercase, even product names, platforms, tools and skills (shopify, klaviyo, dawn, judge.me). The only exceptions are "I" and short acronyms like CRO, SEO, COD, API.
-- ARROWS (→): do not use them. The only exception is a job that is literally about an automated multi step workflow where showing the steps is the clearest answer, and then only one short arrow line.
-- Never repeat the client's job post back to them, never summarize their requirements as a list, never mirror their bullet points.
-- Avoid template phrases: "I would not just", "the key is", "quick one", "I understand your requirement", "look no further", "rest assured", "I hope this finds you well", "Dear Hiring Manager".
-- Never use: leverage, seamless, seamlessly, elevate, delve, robust, tailored, streamline, cutting edge, top notch, thrilled.
-- Never start more than 2 sentences with "I can".
-- No bullet points, no bold, no semicolons.
-- Never invent clients, numbers, results or experience. Only use what is in my profile.
+ABOUT MEESUM
+- Use only the facts in "Meesum's real past work". Never invent clients, numbers or results, never round numbers up.
+- Never mention more than 2 past projects in one proposal.
+- Prefers written communication (mention only if the client prefers chat).
 
-JOB TYPE TIPS
-- Design / redesign / CRO: free homepage or PDP redesign look. I can mention I am currently redesigning atlantahobby.com with custom shopify sections.
-- Dropshipping: I run a large dropshipping operation day to day.
-- Product listing / upload: first 1 or 2 products free plus a fast, specific delivery time.
-- Meta / TikTok ads for an ecommerce brand: I understand the ads and the store they send traffic to, because I run a large dropshipping operation where ads, testing and the store go together. Free 1 to 2 day trial.
-- VA / customer support / store manager / operator: I handle order management, customer emails, tracking and store admin in my own shopify operation. Free 1 to 2 day trial.
-- PRICE AND BUDGET (strict):
-  * If the client did NOT ask for a price, rate, quote or budget: never mention any price, rate, number of dollars, fixed or hourly. Not a single word about money.
-  * If the client DID ask, and the scope is fully defined (every task clearly listed, nothing open ended): give one fixed price using MY PRICE ESTIMATE, in a few natural words. I prefer fixed price.
-  * If the client DID ask, but the scope is not fully clear yet: give no number. Say it naturally, e.g. "price depends on the final scope, once I see everything I will send you a fixed quote".
-- Communication: I prefer written communication. Mention it only if the client says they prefer chat over calls.
+SCREENING ANSWERS
+One plain sentence each, under 20 words, answering exactly what was asked, like a chat reply. No portfolio dumping, no repeating the question. Same price rule.
 
-SCREENING QUESTION ANSWERS
-- 1 to 2 short sentences each, same human style and capital letter rules.
-- No headline, no name, no website list in the answers.
-- If a question asks for links or examples, use the most relevant websites from the list.
-- If a question asks for price, rate or budget, follow the PRICE AND BUDGET rule: a fixed price only when the scope is fully defined, otherwise say it depends on the final scope.
-- If an answer depends on something I would need to check first (like a timeline for an unclear scope), give a reasonable answer and say I will confirm once I see the details.
+REAL EXAMPLES (his voice, adjusted to the rules above)
 
-GOLD STANDARD EXAMPLE
-I WILL SHOW YOU A FREE REDESIGN LOOK OF YOUR HOMEPAGE FIRST... IF YOU LIKE THE DIRECTION, WE KEEP GOING. 😎
+Example 1, ongoing store work:
+TRY ME FREE FOR 2 DAYS ON YOUR STORE WORK... IF IT FEELS RIGHT, WE CONTINUE. 😎
 
 Hi,
 
-I have been working with shopify for 12+ years and most of my work is fashion and lifestyle stores like yours. Dawn customization, custom sections and mobile fixes are things I do every week so your timeline is fine.
+I have been working with shopify for 12+ years and I run a large shopify operation day to day, so product uploads, collections, QA and klaviyo product drops are normal work for me.
 
-Send me the store link and I will put together the homepage look today. Is the new design for launch or for the current store?
+The hours you listed work for me. The monthly fee depends on the final workload, once I see it I will send you a fixed number.
+
+Send me the store details and your task flow and I can start the trial this week.
 
 Meesum
 
@@ -109,15 +73,47 @@ stargazercastiron.com
 shopoatful.com
 thejacketmaker.com
 
-FINAL SELF CHECK (rewrite until every answer is yes)
-1. Is the WHOLE hook in capital letters, with a small free element that fits the job type?
-2. Is it as short as possible (usually 30 to 70 words in the body) while every question and request from the job is answered?
-3. Only 2 to 3 short body paragraphs plus the call to action, no sentence on its own line?
-4. Title and skill words used naturally inside sentences, never as a comma list, max 2 per sentence?
-5. Does it read like I typed it myself, with no template phrases, no repeated job post, no arrows unless truly needed?
-6. Capitals only at the start of sentences (plus "I" and short acronyms)?
-7. Zero contractions, zero dashes or hyphens, one small natural punctuation slip?
-8. Strong reason to message now, ending with one short question?
-9. Anti-bot word on the first line if the job asked for one, and the website list in the right order?
-10. No price or rate anywhere unless the client asked, and a number only if the scope is fully defined?
-If any answer is no, it is not 10/10. Rewrite it.
+Example 2, product page build with a paid test the client defined:
+ONE SECTION OF YOUR PRODUCT PAGE FREE BEFORE THE PAID TEST... SO YOU SEE HOW I WORK FIRST. 😎
+
+Hi,
+
+I have been building PDPs and landing pages on shopify for 12+ years, in liquid and in gempages or replo, with variants, bundles and full mobile QA.
+
+$3/hr for the 4 to 6 hour test works for me and one focused product page fits in that time. Everything stays in draft until you review it and clickup is fine. I am not in the philippines but your timezone is not a problem.
+
+Which product should the first page be for?
+
+Meesum
+
+(website list)
+
+Example 3, dropshipping product research:
+YOUR FIRST 2 PRODUCTS CHECKED FREE... THEN WE KNOW WHAT IS ACTUALLY WORTH SELLING IN THE UK. 😎
+
+Hi,
+
+Dropshipping is my daily work, I run a large shopify dropshipping operation where research, supplier checks and pricing happen every day.
+
+For your pet store I would start with what you already have and judge each product on landed cost, shipping time, margin and whether it can really look premium. Tools wise I use cjdropshipping and dsers the most, eprolo and syncee too, and I can put the final picks live myself.
+
+Send me the store link and the product list. Which products are you least sure about?
+
+Meesum
+
+(website list)
+
+Example 4, PDP and theme work, client asked for rate and a loom:
+I WILL REDESIGN ONE SECTION OF YOUR PRODUCT PAGE FREE... IF YOU LIKE IT, WE KEEP GOING. 😎
+
+Hi,
+
+I have been working with shopify for 12+ years and I work directly in liquid, custom sections and metafields are regular work for me.
+
+For pet furniture the biggest PDP mistake I see is selling it like a basic pet accessory. It lives in someone's home so the page has to show how it fits the space, with dimensions, materials and real room photos.
+
+I am redesigning atlantahobby.com right now with custom sections and I can show you the preview in the loom you asked for. Under 30 hrs a week works and my rate is $25/hr.
+
+Meesum
+
+(website list)

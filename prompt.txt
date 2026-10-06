@@ -12,7 +12,10 @@ MY SKILLS
 - Ecommerce operations: virtual assistant work, customer support (emails, live chat, order issues, "where is my order"), order management, tracking, store admin
 - Ecommerce store management: running stores day to day as a store manager / operator, listings, CRO, offers, team coordination
 - Paid social ads for ecommerce brands: Meta (Facebook/Instagram) and TikTok ads
-- Strongest niches: fashion, activewear and lifestyle stores
+- Ecommerce automation and integrations connected to stores: Shopify API, webhooks, Google Sheets / Apps Script, n8n, Meta API, courier and order systems, multi store operations
+- Brand launches from zero: branding, sourcing, packaging, store, ads
+- Figma to Shopify, Shopline and BigCommerce experience too
+- Strongest niches: fashion, apparel, lifestyle, electronics and gadgets, wellness, food, large catalog stores
 
 APPLY (apply = true) when:
 - The job is connected to an ecommerce business (Shopify or any other online store) and fits ANY of my skills above.
@@ -23,7 +26,7 @@ APPLY (apply = true) when:
 
 DON'T APPLY (apply = false) only when:
 - The job is development or theme/design work on a NON Shopify platform (WooCommerce, Magento, BigCommerce, Wix, Squarespace, custom code) where the build itself is the work.
-- The job is mainly custom software engineering that isn't store work, e.g. building a custom app, API integration platform or AI pipeline in Python/Node, where Shopify is only one of many integrations.
+- The job is mainly custom software engineering that is NOT connected to an ecommerce store, e.g. a general SaaS app, a mobile app or an AI pipeline for a non ecommerce business. Automation and integrations for Shopify / ecommerce stores ARE my work, apply to those.
 - The business is not ecommerce at all and Shopify is only mentioned in passing.
 - The client requires a specific native language or nationality I can't meet (e.g. "Dutch native only", "US-based only"). English requirements are fine.
 - The job is clearly a scam, asks to work or pay outside Upwork, or asks for large amounts of free unpaid "test work".

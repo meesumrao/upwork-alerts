@@ -1,0 +1,33 @@
+MEESUM'S REAL EXPERIENCE (only use facts written here, never add or stretch numbers)
+
+OVERALL
+- 12+ years in ecommerce. Owned and ran my own clothing / printed t-shirt brand Enfinity Apparel (BigCommerce) from 2011 to 2021, Pakistan then the Middle East: products, designs, sourcing, website, ads, customer service, orders, team.
+- Today I run a 30+ store Shopify product testing operation (about 10 products tested daily) and built the automation behind it.
+
+COMPLETE SHOPIFY STORES I BUILT
+- atlantahobby.com (RC hobby: cars, planes, drones, parts): fully custom Shopify 2.0 build. Custom homepage sections built from scratch (parts finder, learning center, video, trust bar, collection cards), mega menu, 362 custom SVG icons, custom PDP with tabs that become accordions on mobile, metafield system feeding 8,000+ products, everything editable in the theme editor with separate desktop and mobile controls. Also the CRO and UX of the store.
+- pashaas.com (fashion / apparel): built the store plus a bundle builder (color, size, quantity with validation), quantity offer cards, sticky add to cart, social proof, customer photo gallery, mystery gift add ons. Speed fix: page weight 11.2 MB to about 3.8 MB, PageSpeed about 68 to 85 to 97. Also built a Shopify to Google Sheets to PostEx courier to WhatsApp order system (webhooks, COD, airway bills, tracking, returns, replacements, failed deliveries).
+- zerolifestyle.co (smart watches, earbuds, gadgets): complete store built by me.
+- audionic.co (speakers, headphones, audio): complete store built by me.
+- checkmateatelier.com (fashion): complete store built by me.
+- shopoatful.com: complete store built by me.
+- thejacketmaker.com (leather jackets, large fashion catalog): complete store built by me, variants and large catalog structure.
+- hammahz.com (cigars, coffee, spirits, premium lifestyle): complete store built by me.
+- shopjoga.com: full Figma to Shopify implementation, pixel accurate desktop and mobile.
+- Neplux: brand from zero (logo, identity) plus a premium custom Shopify store, existing inventory sold out.
+
+REDESIGNS, CUSTOM DEVELOPMENT AND FIXES
+- axrah.com (red light / wellness devices, Shopline): complete site customization, a product recommendation survey (age, weight, budget) that suggests the right device, metafield based button text (pre order vs add to cart) across PDP, quick add and cards, consultation booking logic, and fixed a broken add to cart ("no product data found") by restoring missing cart configuration.
+- otheblue.com: redesign and implementation plus Meta pixel and conversion tracking setup.
+- stargazercastiron.com (cast iron cookware): CRO audit and a custom discount system (subscriber discount, event discount, product level override, priority logic, PDP and cart pricing, badges).
+
+META ADS, CRO AND GROWTH
+- forestsuperfoods.com (superfoods): managed Meta ads at about $140,000 per month in spend, plus creative / video editing and website CRO.
+- Shilajit wellness brand (3 month launch): brand, sourcing, packaging, store, ad creatives and Meta ads from zero to sales, inventory sold out.
+- Meta ads skills: testing, ABO / CBO, scaling, retargeting, pixel and CAPI, multi account reporting.
+
+STORE OPERATIONS (long term)
+- clearance.ae and dubailist.com: recreated both websites and ran the full online operation for a long period: product uploads, orders, 4 location inventory, CRO, Meta ads. Everything except physically packing orders.
+
+AUTOMATION
+- 30+ Shopify store system: Google Sheets control panel, Shopify API, Meta API, webhooks, Apps Script, n8n and AI. Product research (Kalodata, AI analysis of winning ads), one click product launch (product, images, video, variants, price, menu, publish), multi store order sync with duplicate protection, Meta reporting across business managers (spend, sales, ROAS), bulk pixel creation. Replaced roughly 10 people's daily manual work.

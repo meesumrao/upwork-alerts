@@ -63,6 +63,8 @@ MIN_SPENT_PER_HIRE = 50   # is se upar
 HERE = Path(__file__).parent
 CRITERIA = (HERE / "prompt.txt").read_text(encoding="utf-8")
 PROPOSAL_FORMAT = (HERE / "proposal_format.txt").read_text(encoding="utf-8")
+EXP_FILE = HERE / "experience.txt"
+EXPERIENCE = EXP_FILE.read_text(encoding="utf-8") if EXP_FILE.exists() else ""
 
 
 # ---------- Helpers ----------
@@ -195,8 +197,8 @@ def job_to_text(job, info, est=None):
         f"Experience level: {job['experience']}",
     ]
     keywords = [job["title"]] + job["skills"]
-    lines.append("KEYWORDS from the job title and skills (use them inside normal sentences, max 2 per sentence, "
-                 "NEVER as a comma list, skip any that do not fit naturally): " + " | ".join(k for k in keywords if k))
+    lines.append("Job title and skill words (use naturally where they fit, skipping some is fine, never as a comma list): "
+                 + " | ".join(k for k in keywords if k))
     if job["anti_bot"]:
         lines.append(f"IMPORTANT - client asks to include this exact word/phrase at the start of the proposal: {job['anti_bot']}")
     if job["must_include"]:
@@ -253,6 +255,9 @@ SYSTEM_PROMPT = f"""You evaluate Upwork jobs for a freelancer and write proposal
 ## Freelancer's criteria for deciding whether to apply:
 {CRITERIA}
 
+## Meesum's real past work (pick the 1 or 2 projects most relevant to THIS job, never invent anything):
+{EXPERIENCE}
+
 ## Proposal format (follow it exactly):
 {PROPOSAL_FORMAT}
 
@@ -281,26 +286,24 @@ def ask_ai(job_text):
     return json.loads(content)
 
 
-REVIEW_PROMPT = f"""You are a strict Upwork proposal editor. You check a draft proposal against every rule below and fix it.
+REVIEW_PROMPT = f"""You are a light editor for an Upwork proposal. The writer's voice is good, keep it.
+Do NOT restructure it, do NOT make it more formal, do NOT add paragraphs or new sentences.
 
-## Rules the proposal must follow:
+The rules the proposal follows:
 {PROPOSAL_FORMAT}
 
-Score the draft from 0 to 10 against EVERY rule. Check especially:
-- the WHOLE hook is in capital letters and has a small free element that fits the job type
-- it is as SHORT as possible (usually 30 to 70 words in the body) but every question and request from the job is answered
-- only 2 to 3 short body paragraphs plus the call to action, no sentence alone on its own line
-- title and skill keywords are used naturally inside sentences, never as a comma list, max 2 per sentence
-- it reads like a person typed it word by word: no template phrases, no repeating the job post back, no arrows unless the job is truly a multi step workflow
-- capitals only at the start of sentences (plus "I" and short acronyms), no contractions, no dashes or hyphens
-- strong reason to reply ending with one short question, anti-bot word if asked, website list in the right order
-- NO price, rate or budget anywhere unless the client asked, and a number only if the scope is fully defined, otherwise "depends on the final scope"
-If it is not a 10/10, rewrite it until it is 10/10. When in doubt, make it SHORTER.
-Also check the screening answers with the same human style rules.
+Only do these things:
+1. Fix any hard rule that is broken: anti-bot word missing from the first line, hook not a single ALL CAPS line with a small free offer and " 😎",
+   a price or rate that the client did not ask for (remove it), contractions, dashes, hyphens, arrows, bullet points,
+   banned phrases, a comma list of skills that was not asked for, or the website list missing or out of order.
+2. Make sure every question and request in the job got an answer. If one is missing, add it in a few words.
+   Keep any mention of a past project, do not add new projects or numbers.
+3. Make it SHORTER: cut filler, repeated points and anything the client would skip. Never make it longer except to answer something missing.
+4. Screening answers: one plain sentence each, under 20 words.
 
 Respond ONLY with a JSON object, no other text:
-{{"score": integer 0-10 for the FINAL version,
-  "proposal": "the final 10/10 proposal",
+{{"score": integer 0-10 for the final version,
+  "proposal": "the final proposal",
   "screening_answers": ["final answer per screening question, empty list if none"]}}"""
 
 
