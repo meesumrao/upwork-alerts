@@ -23,19 +23,25 @@ from apify_client import ApifyClient
 # ---------- Secrets ----------
 APIFY_TOKEN = os.environ["APIFY_TOKEN"]
 SLACK_WEBHOOK_URL = os.environ["SLACK_WEBHOOK_URL"]
+# Sleep / wake (Slack mein "sleep" ya "wake" likhein). Token na ho to ye feature band, system hamesha chalu.
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN") or ""
+SLACK_CHANNEL_ID = os.getenv("SLACK_CHANNEL_ID") or ""
+SLEEP_AT = os.getenv("SLEEP_AT") or "06:00"     # Pakistan time, roz khud sleep
+WAKE_AT = os.getenv("WAKE_AT") or "12:00"       # Pakistan time, roz khud wake
 AI_API_KEY = os.environ["AI_API_KEY"]
 AI_BASE_URL = os.getenv("AI_BASE_URL") or "https://api.openai.com/v1"
 AI_MODEL = os.getenv("AI_MODEL") or "gpt-5.4"
 
 # ---------- Settings ----------
 ACTOR_ID = "hyperbach/upwork-scraper-ai"
-FEED_ID = "meesum-shopify-v2"         # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
+FEED_ID = "meesum-v3"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
 STORE_NAME = "upwork-shopify-state"
 # Hyperbach se wahi jobs mangwao jin mein kahin bhi ye lafz hon (baaqi chhaant script karti hai)
-KEYWORDS = ["shopify", "shopifyplus", "ecommerce", "e-commerce", "e commerce"]
+KEYWORDS = ["shopify", "shopifyplus", "ecommerce", "e-commerce", "e commerce",
+            "dropshipping", "dropship", "drop shipping", "drop ship"]
 
 # Rule 1: title ya skills mein shopify / ecommerce ho
-CORE_RE = re.compile(r"shopify|\be[\s\-\u2010\u2011]?commerce", re.I)
+CORE_RE = re.compile(r"shopify|\be[\s\-\u2010\u2011]?commerce|\bdrop[\s\-]?ship", re.I)
 # Rule 2: title mein in mein se koi kaam ho, aur job mein kahin bhi shopify / ecommerce ho
 ROLE_RE = re.compile(
     r"\b(meta ads?|fb ads?|facebook ads?|tik ?tok ads?|instagram ads?|"
@@ -49,7 +55,8 @@ FRESH_MAX_AGE_MIN = 120               # is se purani job normal run mein notify 
 BACKUP_ACTOR = "blackfalcondata/upwork-scraper"
 BACKUP_EVERY_MIN = int(os.getenv("BACKUP_EVERY_MIN") or "15")   # 0 = backup band
 BACKUP_MAX_AGE_MIN = 240              # backup sirf itni purani jobs dekhta hai
-BACKUP_QUERY = "shopify OR shopifyplus OR ecommerce OR \"e-commerce\" OR \"e commerce\""
+BACKUP_QUERY = ("shopify OR shopifyplus OR ecommerce OR \"e-commerce\" OR \"e commerce\" OR "
+                "dropshipping OR dropship OR \"drop shipping\"")
 BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
 BACKFILL_LIMIT = 300
 SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
@@ -143,6 +150,39 @@ def normalize(row):
 
 
 # ---------- Sharten ----------
+# ---------- Hyperbach se sirf kaam ki jobs mangwao (3 feeds) ----------
+# Feed 1: title mein shopify / ecommerce
+FEED_TITLE = "shopify OR ecommerce OR e-commerce OR e commerce OR dropship OR drop ship"
+# Feed 2: skills mein shopify / ecommerce
+FEED_SKILLS = "shopify, ecommerce, e-commerce, dropship, drop ship"
+# Feed 3: title mein kaam ka role, aur job mein kahin bhi shopify / ecommerce
+FEED_ROLES = ("meta ads OR meta ad OR facebook ads OR fb ads OR instagram ads OR tiktok ads OR "
+              "virtual assistant OR customer service OR customer support OR cust service OR cust support OR "
+              "manager OR management OR operator OR operations OR listing OR cro OR conversion")
+
+# Ye jobs nahi chahiye (title dekh ke seedha skip, AI tak bhi nahi jati)
+# 1) Ye roles kabhi nahi, chahe title mein shopify bhi ho
+EXCLUDE_ROLE_RE = re.compile(
+    r"creative strateg|\bugc\b|creator|influencer|affiliate|klaviyo|email marketing|\bmentor|\bcoach", re.I)
+# 2) Doosre platforms / backend: sirf tab skip jab title mein shopify NA ho
+#    (taake "WooCommerce to Shopify migration" ya "Full stack Shopify developer" na kate)
+EXCLUDE_TECH_RE = re.compile(
+    r"amazon|tik ?tok shop|\bwix\b|squarespace|woocommerce|magento|webflow|wordpress|\bsquare\b|"
+    r"\baws\b|supabase|postgres|back ?end|full[\s\-]?stack|\bdevops\b|"
+    r"\bseo\b|\baeo\b|backlink|link ?building", re.I)
+
+
+def excluded(title):
+    m = EXCLUDE_ROLE_RE.search(title)
+    if m:
+        return m.group(0)
+    if not re.search(r"shopify", title, re.I):
+        m = EXCLUDE_TECH_RE.search(title)
+        if m:
+            return m.group(0)
+    return None
+
+
 def keyword_match(job):
     title = job["title"]
     skills = " ".join(job["skills"])
@@ -155,6 +195,9 @@ def keyword_match(job):
 
 
 def check(job):
+    bad = excluded(job["title"])
+    if bad:
+        return False, f"title mein '{bad}' (aap ka kaam nahi)"
     if not keyword_match(job):
         return False, "keyword rule match nahi"
     if not job["payment_verified"]:
@@ -482,27 +525,40 @@ def notify_skipped(job, info, ai, est=None):
 
 
 # ---------- Main ----------
-def fetch_jobs(client):
-    run_input = {
-        "any_words": KEYWORDS,
+def fetch_jobs(client, feed_start):
+    base = {
         # Server pe sharten (reject hui jobs ke paise nahi lagte)
         "buyer_payment_verified": True,
         "hire_rate": f">={MIN_HIRE_RATE + 1}",
         "hires": ">=1",
         "total_spent": f">={MIN_SPENT_PER_HIRE}",
-        "clientId": FEED_ID,
         "whats_new": False,
+    }
+    feeds = {
+        "title": {"title": FEED_TITLE},
+        "skills": {"skills": FEED_SKILLS},
+        "roles": {"title": FEED_ROLES, "any_words": KEYWORDS},
     }
     if BACKFILL_HOURS > 0:
         print(f"BACKFILL: pichle {BACKFILL_HOURS} ghante ki jobs")
-        run_input.update({"notifications_only": False,
-                          "date_posted": f"{BACKFILL_HOURS}h",
-                          "limit": BACKFILL_LIMIT})
-    else:
-        # Har run sirf pichle run ke baad aayi jobs deta hai, har job ka ek hi dafa bill
-        run_input.update({"notifications_only": True, "limit": LIMIT})
-
-    return run_actor(client, ACTOR_ID, run_input)
+    rows, ids = [], set()
+    for name, filt in feeds.items():
+        run_input = {**base, **filt, "clientId": f"{FEED_ID}-{name}"}
+        if BACKFILL_HOURS > 0:
+            run_input.update({"notifications_only": False, "date_posted": f"{BACKFILL_HOURS}h",
+                              "limit": BACKFILL_LIMIT})
+        else:
+            # Har run sirf pichle run ke baad aayi jobs, feed sirf feed_start ke baad ki jobs se shuru
+            run_input.update({"notifications_only": True, "limit": LIMIT,
+                              "created_at": f">={feed_start}"})
+        got = run_actor(client, ACTOR_ID, run_input)
+        print(f"Feed '{name}': {len(got)} jobs")
+        for r in got:
+            rid = str(r.get("id"))
+            if rid not in ids:
+                ids.add(rid)
+                rows.append(r)
+    return rows
 
 
 def run_actor(client, actor_id, run_input, timeout=240):
@@ -548,14 +604,14 @@ def backup_prefilter(row):
     return True
 
 
-def fetch_backup(client, known_ids):
+def fetch_backup(client, known_ids, max_age=BACKUP_MAX_AGE_MIN):
     """Black Falcon se nayi jobs, phir jo chhooti hon un ka poora data Hyperbach se (link ke zariye)."""
     bf_rows = run_actor(client, BACKUP_ACTOR, {
         "query": BACKUP_QUERY,
         "sort": "recency",
         "verifiedPaymentOnly": True,
         "minClientTotalSpent": MIN_SPENT_PER_HIRE,
-        "maxAgeMinutes": BACKUP_MAX_AGE_MIN,
+        "maxAgeMinutes": max_age,
         "maxResults": 100,
         "incrementalMode": True,
         "stateKey": "meesum-backup-v1",
@@ -578,7 +634,88 @@ def fetch_backup(client, known_ids):
     return full
 
 
+# ---------- Sleep / wake ----------
+SLEEP_MSG = "😴 Sleep mode on"
+WAKE_MSG = "☀️ Wake mode on"
+
+
+def last_schedule_event(now):
+    """Pichla auto sleep/wake waqt (Pakistan time) aur us ka mode."""
+    events = []
+    local_now = now.astimezone(PKT)
+    for days_back in (0, 1):
+        day = (local_now - timedelta(days=days_back)).date()
+        for hhmm, mode in ((SLEEP_AT, "sleep"), (WAKE_AT, "wake")):
+            h, m = (int(x) for x in hhmm.split(":"))
+            t = datetime(day.year, day.month, day.day, h, m, tzinfo=PKT)
+            if t <= local_now:
+                events.append((t.astimezone(timezone.utc), mode))
+    return max(events)
+
+
+def slack_history_since(oldest_ts):
+    msgs, cursor = [], None
+    while True:
+        params = {"channel": SLACK_CHANNEL_ID, "oldest": f"{oldest_ts:.6f}", "limit": 200}
+        if cursor:
+            params["cursor"] = cursor
+        r = requests.get("https://slack.com/api/conversations.history",
+                         headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"}, params=params, timeout=20)
+        data = r.json()
+        if not data.get("ok"):
+            raise RuntimeError(f"Slack read error: {data.get('error')}")
+        msgs += data.get("messages", [])
+        cursor = (data.get("response_metadata") or {}).get("next_cursor")
+        if not cursor:
+            return msgs
+
+
+def control_mode(now):
+    """Return ('sleep'|'wake', just_woke). Jo sab se aakhri hua (aap ka hukm ya auto waqt), wahi chalta hai."""
+    if not (SLACK_BOT_TOKEN and SLACK_CHANNEL_ID):
+        return "wake", False
+    sched_time, sched_mode = last_schedule_event(now)
+    msgs = slack_history_since(sched_time.timestamp())
+    manual = None                                   # aap ka sab se naya "sleep"/"wake"
+    for m in msgs:                                  # Slack naye se purane ki tarteeb mein deta hai
+        if m.get("bot_id") or m.get("subtype"):
+            continue
+        cmd = (m.get("text") or "").strip().lower()
+        if cmd in ("sleep", "wake"):
+            manual = (float(m["ts"]), cmd)
+            break
+    if manual:
+        mode, since_ts, who = manual[1], manual[0], "aap ne likha"
+    else:
+        mode, since_ts = sched_mode, sched_time.timestamp()
+        who = f"auto {(SLEEP_AT if mode == 'sleep' else WAKE_AT)}"
+    announced = any(m.get("bot_id") and float(m["ts"]) >= since_ts and
+                    (m.get("text") or "").startswith(SLEEP_MSG if mode == "sleep" else WAKE_MSG)
+                    for m in msgs)
+    just_woke = False
+    if not announced:
+        if mode == "sleep":
+            slack_text(f"{SLEEP_MSG} ({who}). Jobs band, \"wake\" likhein to chalu.")
+        else:
+            slack_text(f"{WAKE_MSG} ({who}). Jobs chalu.")
+            just_woke = True
+    return mode, just_woke
+
+
 def main():
+    now = datetime.now(timezone.utc)
+    if BACKFILL_HOURS == 0:
+        try:
+            mode, just_woke = control_mode(now)
+        except Exception as ex:
+            print("Sleep/wake check error (system chalu rakha):", ex)
+            mode, just_woke = "wake", False
+        if mode == "sleep":
+            print("😴 Sleep mode: Apify call nahi, kharcha nahi")
+            return
+    else:
+        just_woke = False
+
     client = ApifyClient(APIFY_TOKEN)
     store = client.key_value_stores().get_or_create(name=STORE_NAME)
     kv = client.key_value_store(field(store, "id"))
@@ -586,7 +723,14 @@ def main():
     seen = state.get("seen", [])
     seen_set = set(seen)
 
-    rows = fetch_jobs(client)
+    if just_woke:
+        # Sone ke waqt ki jobs ka bill aur dher na aaye: feeds jagne ke waqt se fresh
+        state["feed_start"] = (now - timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        state["awake_since"] = now.isoformat()
+    if state.get("hb_feed") != FEED_ID or not state.get("feed_start"):
+        # Nayi feeds: sirf abhi ke baad ki jobs (purani jobs ka ek saath bill na aaye)
+        state["feed_start"] = (datetime.now(timezone.utc) - timedelta(minutes=15)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    rows = fetch_jobs(client, state["feed_start"])
     print(f"Hyperbach ne {len(rows)} jobs di")
     limit = BACKFILL_LIMIT if BACKFILL_HOURS > 0 else LIMIT
     first_feed_run = state.get("hb_feed") != FEED_ID
@@ -594,13 +738,16 @@ def main():
         slack_text(f"⚠️ Limit ({limit}) poori ho gayi, kuch jobs miss ho sakti hain.")
 
     # Backup har BACKUP_EVERY_MIN minute (main feed se chhooti jobs)
-    now = datetime.now(timezone.utc)
     last_backup = parse_time(state.get("backup_last")) if state.get("backup_last") else None
     if (BACKUP_EVERY_MIN > 0 and BACKFILL_HOURS == 0 and
             (not last_backup or (now - last_backup).total_seconds() >= BACKUP_EVERY_MIN * 60 - 90)):
         try:
             feed_ids = {str(r.get("id")) for r in rows}
-            rows += fetch_backup(client, seen_set | feed_ids)
+            awake = parse_time(state.get("awake_since")) if state.get("awake_since") else None
+            backup_age = BACKUP_MAX_AGE_MIN
+            if awake:
+                backup_age = max(15, min(BACKUP_MAX_AGE_MIN, int((now - awake).total_seconds() // 60) + 10))
+            rows += fetch_backup(client, seen_set | feed_ids, backup_age)
             state["backup_last"] = now.isoformat()
         except Exception as ex:
             print("Backup error (main feed par asar nahi):", ex)
