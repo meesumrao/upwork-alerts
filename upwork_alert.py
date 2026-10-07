@@ -13,12 +13,19 @@ Sharten:
 import json
 import os
 import re
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
 from apify_client import ApifyClient
+
+# GitHub log mein hamari lines foran aur sahi tarteeb mein aayein
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+except Exception:
+    pass
 
 # ---------- Secrets ----------
 APIFY_TOKEN = os.environ["APIFY_TOKEN"]
@@ -562,7 +569,11 @@ def fetch_jobs(client, feed_start):
 
 
 def run_actor(client, actor_id, run_input, timeout=240):
-    run = client.actor(actor_id).call(run_input=run_input, timeout_secs=timeout)
+    try:
+        # Apify actor ka lamba log GitHub mein na aaye (sirf hamari saaf lines)
+        run = client.actor(actor_id).call(run_input=run_input, timeout_secs=timeout, logger=None)
+    except TypeError:
+        run = client.actor(actor_id).call(run_input=run_input, timeout_secs=timeout)
     if not run_ok(run):
         raise RuntimeError(f"{actor_id} run fail: {field(run, 'status')}")
     dataset_id = field(run, "defaultDatasetId", "default_dataset_id")
@@ -733,7 +744,7 @@ def main():
         # Nayi feeds: sirf abhi ke baad ki jobs (purani jobs ka ek saath bill na aaye)
         state["feed_start"] = (datetime.now(timezone.utc) - timedelta(minutes=15)).strftime("%Y-%m-%dT%H:%M:%SZ")
     rows = fetch_jobs(client, state["feed_start"])
-    print(f"Hyperbach ne {len(rows)} jobs di")
+    print(f"Hyperbach ne kul {len(rows)} nayi jobs di")
     limit = BACKFILL_LIMIT if BACKFILL_HOURS > 0 else LIMIT
     first_feed_run = state.get("hb_feed") != FEED_ID
     if len(rows) >= limit and not (first_feed_run and BACKFILL_HOURS == 0):
@@ -814,7 +825,8 @@ def main():
     except Exception as ex:
         print("Status message error:", ex)
     kv.set_record("STATE", state)
-    print(f"Done: {stats}")
+    print(f"===== HISAAB: {stats['new']} nayi | {stats['fail']} sharton pe kati | "
+          f"{stats['skip']} AI ne skip ki | {stats['apply']} apply (Slack) | {stats['backup']} backup se =====")
 
 
 def send_status(state, stats):
