@@ -689,8 +689,10 @@ def control_mode(now):
     else:
         mode, since_ts = sched_mode, sched_time.timestamp()
         who = f"auto {(SLEEP_AT if mode == 'sleep' else WAKE_AT)}"
-    announced = any(m.get("bot_id") and float(m["ts"]) >= since_ts and
-                    (m.get("text") or "").startswith(SLEEP_MSG if mode == "sleep" else WAKE_MSG)
+    # Slack emoji ko ":sunny:" jaise code mein badal deta hai, is liye sirf alfaaz dhoondo
+    marker = "Sleep mode on" if mode == "sleep" else "Wake mode on"
+    announced = any((m.get("bot_id") or m.get("subtype") == "bot_message") and float(m["ts"]) >= since_ts and
+                    marker in (m.get("text") or "")
                     for m in msgs)
     just_woke = False
     if not announced:
