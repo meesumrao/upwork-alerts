@@ -35,3 +35,7 @@ jobs:
           BACKFILL_HOURS: ${{ inputs.backfill_hours }}
           STATUS_MESSAGES: ${{ vars.STATUS_MESSAGES }}
           BACKUP_EVERY_MIN: ${{ vars.BACKUP_EVERY_MIN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          SLEEP_AT: ${{ vars.SLEEP_AT }}
+          WAKE_AT: ${{ vars.WAKE_AT }}
