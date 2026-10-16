@@ -41,7 +41,7 @@ AI_MODEL = os.getenv("AI_MODEL") or "gpt-5.4"
 
 # ---------- Settings ----------
 ACTOR_ID = "hyperbach/upwork-scraper-ai"
-FEED_ID = "meesum-v3"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
+FEED_ID = "meesum-v4"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
 STORE_NAME = "upwork-shopify-state"
 # Hyperbach se wahi jobs mangwao jin mein kahin bhi ye lafz hon (baaqi chhaant script karti hai)
 KEYWORDS = ["shopify", "shopifyplus", "ecommerce", "e-commerce", "e commerce",
@@ -59,7 +59,7 @@ FRESH_MAX_AGE_MIN = 120               # is se purani job normal run mein notify 
 
 # Backup: Hyperbach se chhooti jobs pakadne ke liye Black Falcon (seedha Upwork live search)
 BACKUP_ACTOR = "blackfalcondata/upwork-scraper"
-BACKUP_EVERY_MIN = int(os.getenv("BACKUP_EVERY_MIN") or "15")   # 0 = backup band
+BACKUP_EVERY_MIN = int(os.getenv("BACKUP_EVERY_MIN") or "60")   # 0 = backup band
 BACKUP_MAX_AGE_MIN = 240              # backup sirf itni purani jobs dekhta hai
 BACKUP_QUERY = ("shopify OR shopifyplus OR ecommerce OR \"e-commerce\" OR \"e commerce\" OR "
                 "dropshipping OR dropship OR \"drop shipping\"")
@@ -70,6 +70,7 @@ SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
 STATUS_MESSAGES = (os.getenv("STATUS_MESSAGES") or "off").lower()
 
 MIN_FIXED = 250
+MIN_HOURLY = 5            # hourly band kam az kam $5 tak jaye (rate na likha ho to bhi chalega)
 MIN_HIRE_RATE = 40        # is se upar
 MIN_SPENT_PER_HIRE = 50   # is se upar
 
@@ -212,6 +213,10 @@ def check(job):
     per_hire = spent / hires if hires else 0
     if hires > 0 and per_hire <= MIN_SPENT_PER_HIRE:  # 0 hire wala naya client theek
         return False, f"${per_hire:.0f}/hire"
+    if job["kind"] == "hourly":
+        top = job["hourly_max"] or job["hourly_min"]
+        if top is not None and top < MIN_HOURLY:      # rate likha hi nahi to theek
+            return False, f"hourly ${top:.0f} se kam"
     if job["kind"] == "fixed" and (job["fixed_budget"] or 0) < MIN_FIXED:
         return False, "fixed budget low"
     allowed = job["allowed_countries"]
@@ -466,25 +471,44 @@ def fetch_jobs(client, feed_start):
         "skills": {"skills": FEED_SKILLS},
         "roles": {"title": FEED_ROLES, "any_words": KEYWORDS},
     }
+    # Kharcha bachao: hire rate aur budget bhi Apify pe hi chhaanto
+    hire_parts = {"hr41": {"hire_rate": f">={MIN_HIRE_RATE + 1}"},   # purane achhe clients
+                  "hr0": {"hire_rate": "<=0"}}                         # naye clients (0%)
+    price_parts = {"hourly": {"price_type": "Hourly", "price_min": f">={MIN_HOURLY}",
+                              "include_unspecified_rate": "all"},
+                   "fixed": {"price_type": "Fixed-price", "price": f">={MIN_FIXED}"}}
     if BACKFILL_HOURS > 0:
         print(f"BACKFILL: pichle {BACKFILL_HOURS} ghante ki jobs")
-    rows, ids = [], set()
-    for name, filt in feeds.items():
-        run_input = {**base, **filt, "clientId": f"{FEED_ID}-{name}"}
-        if BACKFILL_HOURS > 0:
-            run_input.update({"notifications_only": False, "date_posted": f"{BACKFILL_HOURS}h",
-                              "limit": BACKFILL_LIMIT})
-        else:
-            # Har run sirf pichle run ke baad aayi jobs, feed sirf feed_start ke baad ki jobs se shuru
-            run_input.update({"notifications_only": True, "limit": LIMIT,
-                              "created_at": f">={feed_start}"})
-        got = run_actor(client, ACTOR_ID, run_input)
-        print(f"Feed '{name}': {len(got)} jobs")
+    jobs_in = []
+    for fname, ffilt in feeds.items():
+        for hname, hfilt in hire_parts.items():
+            for pname, pfilt in price_parts.items():
+                name = f"{fname}-{hname}-{pname}"
+                run_input = {**base, **ffilt, **hfilt, **pfilt, "clientId": f"{FEED_ID}-{name}"}
+                if BACKFILL_HOURS > 0:
+                    run_input.update({"notifications_only": False, "date_posted": f"{BACKFILL_HOURS}h",
+                                      "limit": BACKFILL_LIMIT})
+                else:
+                    run_input.update({"notifications_only": True, "limit": LIMIT,
+                                      "created_at": f">={feed_start}"})
+                jobs_in.append((name, run_input))
+
+    # Saari feeds ek saath (taake run jaldi khatam ho)
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        results = list(pool.map(lambda x: (x[0], run_actor(client, ACTOR_ID, x[1])), jobs_in))
+
+    rows, ids, per_feed = [], set(), {}
+    for name, got in results:
+        key = name.split("-")[0]
+        per_feed[key] = per_feed.get(key, 0) + len(got)
         for r in got:
             rid = str(r.get("id"))
             if rid not in ids:
                 ids.add(rid)
                 rows.append(r)
+    for key, n in per_feed.items():
+        print(f"Feed '{key}': {n} jobs")
     return rows
 
 
