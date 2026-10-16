@@ -205,13 +205,12 @@ def check(job):
         return False, "keyword rule match nahi"
     if not job["payment_verified"]:
         return False, "payment not verified"
-    if (job["hire_rate"] or 0) <= MIN_HIRE_RATE:
-        return False, f"hire rate {job['hire_rate']}%"
+    hire_rate = job["hire_rate"] or 0
+    if 0 < hire_rate <= MIN_HIRE_RATE:                # 0% (naya client) theek, 1-40% nahi
+        return False, f"hire rate {hire_rate:.0f}%"
     hires, spent = job["hires"] or 0, job["spent"] or 0
-    if hires <= 0:
-        return False, "no hires"
-    per_hire = spent / hires
-    if per_hire <= MIN_SPENT_PER_HIRE:
+    per_hire = spent / hires if hires else 0
+    if hires > 0 and per_hire <= MIN_SPENT_PER_HIRE:  # 0 hire wala naya client theek
         return False, f"${per_hire:.0f}/hire"
     if job["kind"] == "fixed" and (job["fixed_budget"] or 0) < MIN_FIXED:
         return False, "fixed budget low"
@@ -237,8 +236,8 @@ def job_to_text(job, info):
     lines = [
         f"Title: {job['title']}",
         f"Budget: {money_text(job)}",
-        f"Client: {job['country']}, spent ${job['spent'] or 0:,.0f}, {job['hires']:.0f} hires, "
-        f"hire rate {job['hire_rate']:.0f}%, rating {job['rating'] or '?'}",
+        f"Client: {job['country']}, spent ${job['spent'] or 0:,.0f}, {job['hires'] or 0:.0f} hires, "
+        f"hire rate {job['hire_rate'] or 0:.0f}%, rating {job['rating'] or '?'}",
         f"Skills: {', '.join(job['skills'])}",
         f"Experience level: {job['experience']}",
     ]
@@ -428,8 +427,8 @@ def job_lines(job, info, ai, label, est=None):
     lines = [
         f"{label} *{esc(job['title'])}*",
         f"💰 {esc(money_text(job))}  |  ⭐ {ai.get('score', '?')}/10  |  🏢 {esc(job['country'])}",
-        f"${job['spent'] or 0:,.0f} spent  |  {job['hires']:.0f} hires (${info['per_hire']:,.0f}/hire)  |  "
-        f"{job['hire_rate']:.0f}% hire rate",
+        f"${job['spent'] or 0:,.0f} spent  |  {job['hires'] or 0:.0f} hires (${info['per_hire']:,.0f}/hire)  |  "
+        f"{job['hire_rate'] or 0:.0f}% hire rate",
     ]
     extra = [posted_text(job)]
     if job.get("source") == "backup":
@@ -460,7 +459,6 @@ def fetch_jobs(client, feed_start):
     base = {
         # Server pe sharten (reject hui jobs ke paise nahi lagte)
         "buyer_payment_verified": True,
-        "hire_rate": f">={MIN_HIRE_RATE + 1}",
         "whats_new": False,
     }
     feeds = {
