@@ -55,12 +55,12 @@ ROLE_RE = re.compile(
     r"managers?|management|operators?|operations?|list\w*|cro)\b", re.I)
 MY_COUNTRY = "Pakistan"
 LIMIT = 200                           # ek run mein max jobs (safety)
-FRESH_MAX_AGE_MIN = 120               # is se purani job normal run mein notify nahi hogi
+FRESH_MAX_AGE_MIN = 60                # 1 ghante se purani job kabhi nahi
 
 # Backup: Hyperbach se chhooti jobs pakadne ke liye Black Falcon (seedha Upwork live search)
 BACKUP_ACTOR = "blackfalcondata/upwork-scraper"
 BACKUP_EVERY_MIN = int(os.getenv("BACKUP_EVERY_MIN") or "60")   # 0 = backup band
-BACKUP_MAX_AGE_MIN = 240              # backup sirf itni purani jobs dekhta hai
+BACKUP_MAX_AGE_MIN = 60               # backup bhi sirf pichle 1 ghante ki jobs
 BACKUP_QUERY = ("shopify OR shopifyplus OR ecommerce OR \"e-commerce\" OR \"e commerce\" OR "
                 "dropshipping OR dropship OR \"drop shipping\"")
 BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
@@ -297,7 +297,7 @@ SYSTEM_PROMPT = f"""You decide whether a freelancer should apply to an Upwork jo
 Respond ONLY with a JSON object, no other text:
 {{"apply": true or false,
   "score": integer 0-10 (how good a fit),
-  "summary": "2 to 3 short plain sentences: what the client needs, the main tasks or deliverables, and any timeline, tool or special requirement",
+  "summary": "2 to 3 short sentences in ROMAN URDU (Urdu written in English letters, e.g. 'Client ko naya Shopify store chahiye...'): client ko kya chahiye, asal kaam kya hain, aur koi deadline, tool ya khaas shart",
   "reason": "very short reason for the decision, max 12 words"}}"""
 
 
@@ -443,16 +443,26 @@ def job_lines(job, info, ai, label, est=None):
     lines.append("  |  ".join(e for e in extra if e))
     if ai.get("summary"):
         lines.append(f"📝 {esc(ai['summary'])}")
-    if est:
-        best = str(est.get("best", "")).lower()
-        lines.append(f"💵 AI rate: Fixed {esc(est.get('fixed', '?'))} (~{esc(est.get('hours', '?'))} hrs)  |  "
-                     f"Hourly {esc(est.get('hourly', '?'))}" + (f"  |  Best: {esc(best)}" if best else ""))
     lines.append(f"🧠 {esc(ai.get('reason', ''))}")
     return lines
 
 
 def notify(job, info, ai, est=None):
     slack_job(job_lines(job, info, ai, "✅ Apply:", est), job["url"])
+
+
+def notify_rejected(job, reason):
+    """Script ki sharton pe kati job (AI tak nahi gayi)."""
+    hires, spent = job["hires"] or 0, job["spent"] or 0
+    per_hire = spent / hires if hires else 0
+    lines = [
+        f"🚫 Skipped (sharten): *{esc(job['title'])}*",
+        f"💰 {esc(money_text(job))}  |  🏢 {esc(job['country'])}",
+        f"${spent:,.0f} spent  |  {hires:.0f} hires (${per_hire:,.0f}/hire)  |  {job['hire_rate'] or 0:.0f}% hire rate",
+        "  |  ".join(e for e in [posted_text(job), "🛟 Backup" if job.get("source") == "backup" else None] if e),
+        f"❌ Wajah: {esc(reason)}",
+    ]
+    slack_job(lines, job["url"])
 
 
 def notify_skipped(job, info, ai, est=None):
@@ -562,7 +572,7 @@ def fetch_backup(client, known_ids, max_age=BACKUP_MAX_AGE_MIN):
         "query": BACKUP_QUERY,
         "sort": "recency",
         "verifiedPaymentOnly": True,
-        "maxAgeMinutes": max_age,
+        "maxAgeMinutes": max_age + 5,        # thoda overlap, purani job script kaat deti hai
         "maxResults": 100,
         "incrementalMode": True,
         "stateKey": "meesum-backup-v1",
@@ -727,12 +737,13 @@ def main():
         if not ok:
             stats["fail"] += 1
             print(f"Sharten fail: {job['title'][:50]} ({info})")
+            if SEND_SKIPPED:
+                try:
+                    notify_rejected(job, info)
+                except Exception as ex:
+                    print("Slack error:", ex)
             continue
         est = None
-        try:
-            est = estimate_rate(job)
-        except Exception as ex:
-            print("Rate estimate error:", ex)
         try:
             ai = ask_ai(job_to_text(job, info))
         except Exception as ex:
