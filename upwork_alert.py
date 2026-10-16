@@ -1,5 +1,5 @@
 """
-Upwork jobs -> AI (apply ya nahi + proposal) -> Slack
+Upwork jobs -> AI (apply ya skip) -> Slack
 Data source: Apify actor hyperbach/upwork-scraper-ai (jobs ~1-4 minute mein)
 
 Sharten:
@@ -51,8 +51,7 @@ KEYWORDS = ["shopify", "shopifyplus", "ecommerce", "e-commerce", "e commerce",
 CORE_RE = re.compile(r"shopify|\be[\s\-\u2010\u2011]?commerce|\bdrop[\s\-]?ship", re.I)
 # Rule 2: title mein in mein se koi kaam ho, aur job mein kahin bhi shopify / ecommerce ho
 ROLE_RE = re.compile(
-    r"\b(meta ads?|fb ads?|facebook ads?|tik ?tok ads?|instagram ads?|"
-    r"virtual assistants?|va|cust(?:omer)? services?|cust(?:omer)? support|"
+    r"\b(virtual assistants?|va|cust(?:omer)? services?|cust(?:omer)? support|"
     r"managers?|management|operators?|operations?|list\w*|cro)\b", re.I)
 MY_COUNTRY = "Pakistan"
 LIMIT = 200                           # ek run mein max jobs (safety)
@@ -76,9 +75,7 @@ MIN_SPENT_PER_HIRE = 50   # is se upar
 
 HERE = Path(__file__).parent
 CRITERIA = (HERE / "prompt.txt").read_text(encoding="utf-8")
-PROPOSAL_FORMAT = (HERE / "proposal_format.txt").read_text(encoding="utf-8")
-EXP_FILE = HERE / "experience.txt"
-EXPERIENCE = EXP_FILE.read_text(encoding="utf-8") if EXP_FILE.exists() else ""
+
 
 
 # ---------- Helpers ----------
@@ -163,8 +160,7 @@ FEED_TITLE = "shopify OR ecommerce OR e-commerce OR e commerce OR dropship OR dr
 # Feed 2: skills mein shopify / ecommerce
 FEED_SKILLS = "shopify, ecommerce, e-commerce, dropship, drop ship"
 # Feed 3: title mein kaam ka role, aur job mein kahin bhi shopify / ecommerce
-FEED_ROLES = ("meta ads OR meta ad OR facebook ads OR fb ads OR instagram ads OR tiktok ads OR "
-              "virtual assistant OR customer service OR customer support OR cust service OR cust support OR "
+FEED_ROLES = ("virtual assistant OR customer service OR customer support OR cust service OR cust support OR "
               "manager OR management OR operator OR operations OR listing OR cro OR conversion")
 
 # Ye jobs nahi chahiye (title dekh ke seedha skip, AI tak bhi nahi jati)
@@ -237,7 +233,7 @@ def money_text(job):
 
 
 # ---------- AI ----------
-def job_to_text(job, info, est=None):
+def job_to_text(job, info):
     lines = [
         f"Title: {job['title']}",
         f"Budget: {money_text(job)}",
@@ -246,17 +242,6 @@ def job_to_text(job, info, est=None):
         f"Skills: {', '.join(job['skills'])}",
         f"Experience level: {job['experience']}",
     ]
-    keywords = [job["title"]] + job["skills"]
-    lines.append("Job title and skill words (use naturally where they fit, skipping some is fine, never as a comma list): "
-                 + " | ".join(k for k in keywords if k))
-    if job["anti_bot"]:
-        lines.append(f"IMPORTANT - client asks to include this exact word/phrase at the start of the proposal: {job['anti_bot']}")
-    if job["must_include"]:
-        lines.append(f"Client's requirements for the proposal: {job['must_include']}")
-    if est:
-        lines.append(f"MY PRICE ESTIMATE (NEVER mention it unless the client asked for a price, rate or quote, and even then "
-                     f"only if the scope is fully defined, otherwise say it depends on the final scope): "
-                     f"fixed {est.get('fixed', '?')} for about {est.get('hours', '?')} hours, or hourly {est.get('hourly', '?')}")
     lines += ["", "Description:", job["description"]]
     if job["questions"]:
         lines += ["", "Screening questions:"] + [f"{i}. {q}" for i, q in enumerate(job["questions"], 1)]
@@ -300,24 +285,16 @@ def estimate_rate(job):
     return json.loads(content)
 
 
-SYSTEM_PROMPT = f"""You evaluate Upwork jobs for a freelancer and write proposals.
+SYSTEM_PROMPT = f"""You decide whether a freelancer should apply to an Upwork job. You do NOT write proposals.
 
 ## Freelancer's criteria for deciding whether to apply:
 {CRITERIA}
-
-## Meesum's real past work (pick the 1 or 2 projects most relevant to THIS job, never invent anything):
-{EXPERIENCE}
-
-## Proposal format (follow it exactly):
-{PROPOSAL_FORMAT}
 
 Respond ONLY with a JSON object, no other text:
 {{"apply": true or false,
   "score": integer 0-10 (how good a fit),
   "summary": "2 to 3 short plain sentences: what the client needs, the main tasks or deliverables, and any timeline, tool or special requirement",
-  "reason": "very short reason for the decision, max 12 words",
-  "proposal": "full proposal text if apply is true, otherwise empty string",
-  "screening_answers": ["one answer per screening question, empty list if none"]}}"""
+  "reason": "very short reason for the decision, max 12 words"}}"""
 
 
 def ask_ai(job_text):
@@ -334,48 +311,6 @@ def ask_ai(job_text):
     content = r.json()["choices"][0]["message"]["content"].strip()
     content = content.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
     return json.loads(content)
-
-
-REVIEW_PROMPT = f"""You are a light editor for an Upwork proposal. The writer's voice is good, keep it.
-Do NOT restructure it, do NOT make it more formal, do NOT add paragraphs or new sentences.
-
-The rules the proposal follows:
-{PROPOSAL_FORMAT}
-
-Only do these things:
-1. Fix any hard rule that is broken: anti-bot word missing from the first line, hook not a single ALL CAPS line with a small free offer and " 😎",
-   a price or rate that the client did not ask for (remove it), contractions, dashes, hyphens, arrows, bullet points,
-   banned phrases, a comma list of skills that was not asked for, or the website list missing or out of order.
-2. Make sure every question and request in the job got an answer. If one is missing, add it in a few words.
-   Keep any mention of a past project, do not add new projects or numbers.
-3. Make it SHORTER: cut filler, repeated points and anything the client would skip. Never make it longer except to answer something missing.
-4. Screening answers: one plain sentence each, under 20 words.
-
-Respond ONLY with a JSON object, no other text:
-{{"score": integer 0-10 for the final version,
-  "proposal": "the final proposal",
-  "screening_answers": ["final answer per screening question, empty list if none"]}}"""
-
-
-def review_ai(job_text, ai):
-    draft = {"proposal": ai.get("proposal", ""), "screening_answers": ai.get("screening_answers") or []}
-    r = requests.post(
-        f"{AI_BASE_URL.rstrip('/')}/chat/completions",
-        headers={"Authorization": f"Bearer {AI_API_KEY}"},
-        json={"model": AI_MODEL,
-              "messages": [{"role": "system", "content": REVIEW_PROMPT},
-                           {"role": "user", "content": f"JOB:\n{job_text}\n\nDRAFT:\n{json.dumps(draft, ensure_ascii=False)}"}],
-              "response_format": {"type": "json_object"}},
-        timeout=120,
-    )
-    r.raise_for_status()
-    content = r.json()["choices"][0]["message"]["content"].strip()
-    content = content.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    fixed = json.loads(content)
-    if fixed.get("proposal"):
-        ai["proposal"] = fixed["proposal"]
-        ai["screening_answers"] = fixed.get("screening_answers") or ai.get("screening_answers") or []
-    return ai
 
 
 # ---------- Slack ----------
@@ -514,17 +449,6 @@ def job_lines(job, info, ai, label, est=None):
 
 def notify(job, info, ai, est=None):
     slack_job(job_lines(job, info, ai, "✅ Apply:", est), job["url"])
-    # Proposal aur screening Q&A ek hi message mein (long-press -> Copy text)
-    text = format_proposal(humanize(ai.get("proposal", "")), job.get("anti_bot"))
-    answers = ai.get("screening_answers") or []
-    if answers:
-        qs = job["questions"]
-        qa = []
-        for i, ans in enumerate(answers):
-            q = qs[i] if i < len(qs) else f"Question {i + 1}"
-            qa.append(f"Q: {q}\nA: {sentence_case(humanize(str(ans)))}")
-        text += "\n\n\n" + "\n\n".join(qa)
-    slack_text(text)
 
 
 def notify_skipped(job, info, ai, est=None):
@@ -537,8 +461,6 @@ def fetch_jobs(client, feed_start):
         # Server pe sharten (reject hui jobs ke paise nahi lagte)
         "buyer_payment_verified": True,
         "hire_rate": f">={MIN_HIRE_RATE + 1}",
-        "hires": ">=1",
-        "total_spent": f">={MIN_SPENT_PER_HIRE}",
         "whats_new": False,
     }
     feeds = {
@@ -605,9 +527,6 @@ def backup_prefilter(row):
         return False
     if row.get("clientPaymentVerified") is False:
         return False
-    spent = num(row.get("clientTotalSpent"))
-    if spent is not None and spent < MIN_SPENT_PER_HIRE:
-        return False
     if "FIXED" in str(row.get("jobType") or "").upper():
         budget = num(row.get("budgetAmount"))
         if budget is not None and budget < MIN_FIXED:
@@ -621,7 +540,6 @@ def fetch_backup(client, known_ids, max_age=BACKUP_MAX_AGE_MIN):
         "query": BACKUP_QUERY,
         "sort": "recency",
         "verifiedPaymentOnly": True,
-        "minClientTotalSpent": MIN_SPENT_PER_HIRE,
         "maxAgeMinutes": max_age,
         "maxResults": 100,
         "incrementalMode": True,
@@ -794,13 +712,7 @@ def main():
         except Exception as ex:
             print("Rate estimate error:", ex)
         try:
-            text = job_to_text(job, info, est)
-            ai = ask_ai(text)
-            if ai.get("apply"):
-                try:
-                    ai = review_ai(text, ai)
-                except Exception as ex:
-                    print("Review error (pehla draft bheja):", ex)
+            ai = ask_ai(job_to_text(job, info))
         except Exception as ex:
             print("AI error:", ex)
             slack_job([f"⚠️ AI error, khud dekh lein: *{esc(job['title'])}*",
