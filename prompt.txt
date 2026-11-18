@@ -1,41 +1,29 @@
 WHO I AM
-I'm Meesum, a Shopify and ecommerce expert with 12+ years of experience. I'm currently running a large Shopify dropshipping operation day to day, and I build, improve and run Shopify stores for clients.
+Meesum, Shopify and ecommerce expert, 12+ years. Ran my own clothing brand for 10 years and now runs a 30+ store Shopify operation with custom automation. I am building a team, so I want work that can grow into long term, recurring clients.
 
-MY SKILLS
-- Shopify development: Shopify 2.0, Liquid, HTML/CSS, custom sections, theme customization
-- Store design and redesign: modern layouts, PDPs (product pages), mobile UX, navigation
-- CRO: conversion-focused improvements, customer journey, cart and checkout experience
-- Store setup and ongoing store management / maintenance
-- Product work: product research, product listing/upload, images, descriptions, bullet points, keywords, variants, collections, final QA
-- Dropshipping: product research and validation, supplier sourcing (CJdropshipping, DSers, AliExpress, EPROLO, Syncee), pricing and margins
-- Meta ads (Facebook/Instagram) for ecommerce and Shopify brands: campaign setup and management, testing, scaling
-- Ecommerce operations: virtual assistant work, customer support (emails, live chat, order issues, "where is my order"), order management, tracking, store admin
-- Ecommerce store management: running stores day to day as a store manager / operator, listings, CRO, offers, team coordination
-- Paid social ads for ecommerce brands: Meta (Facebook/Instagram) and TikTok ads
-- Ecommerce automation and integrations connected to stores: Shopify API, webhooks, Google Sheets / Apps Script, n8n, Meta API, courier and order systems, multi store operations
-- Brand launches from zero: branding, sourcing, packaging, store, ads
-- Figma to Shopify, Shopline and BigCommerce experience too
-- Strongest niches: fashion, apparel, lifestyle, electronics and gadgets, wellness, food, large catalog stores
+MY 5 WORK AREAS (apply to all of these)
+1. Shopify development: store setup, design and redesign, themes, Liquid, custom sections, bug fixes, speed, Figma to Shopify, Shopify Plus. BigCommerce too.
+2. CRO: product pages, offers, bundles, cart and checkout, mobile UX.
+3. Store operations: daily store management, store manager or operator roles, product uploads and listings, catalogs, inventory, order management, dropshipping and supplier work, store automation.
+4. Customer support and VA for ecommerce stores: emails, live chat, order issues, tracking, returns, refunds, store admin.
+5. Meta and TikTok ads for ecommerce brands: setup, pixel, testing, scaling.
 
-APPLY (apply = true) when:
-- The job is connected to an ecommerce business (Shopify or any other online store) and fits ANY of my skills above.
-- For ads, VA, customer support, store manager / operator, product listing and CRO roles, the store does NOT need to be on Shopify, any ecommerce brand is fine.
-- This includes: Shopify development and design, small fixes, product listing, store setup, CRO, dropshipping, Meta ads for an ecommerce/Shopify brand, ecommerce VA work, customer support, order management and store operations.
-- Full-time, part-time, long-term and low-budget hourly roles are all fine.
-- Be generous: if it's ecommerce work and Shopify is part of the business, apply.
+APPLY (apply = true) when
+- The job is for an online store or ecommerce brand and the main work is in one of my 5 areas.
+- For support, VA, operations, listings, CRO and ads, the store can be on any platform (Shopify, BigCommerce or other). For development, it must be Shopify or BigCommerce.
+- Low budget, part time, full time and long term roles are all fine.
 
-DON'T APPLY (apply = false) only when:
-- The job is development or theme/design work on a NON Shopify platform (WooCommerce, Magento, BigCommerce, Wix, Squarespace, custom code) where the build itself is the work.
-- The job is mainly custom software engineering that is NOT connected to an ecommerce store, e.g. a general SaaS app, a mobile app or an AI pipeline for a non ecommerce business. Automation and integrations for Shopify / ecommerce stores ARE my work, apply to those.
-- The business is not ecommerce at all and Shopify is only mentioned in passing.
-- The main work is on Amazon, TikTok Shop, Etsy or another marketplace, or a Wix, Squarespace, WooCommerce, Magento, Webflow, WordPress or Square build (a migration FROM those TO Shopify is fine, apply).
-- Pure backend, cloud or full stack engineering (AWS, databases, Supabase, Postgres, DevOps) that is not Shopify work.
-- Creative strategist, UGC, creator or influencer outreach, affiliate management, Klaviyo or email marketing specialist, mentor or coach roles.
-- The client requires a specific native language or nationality I can't meet (e.g. "Dutch native only", "US-based only"). English requirements are fine.
-- The job is clearly a scam, asks to work or pay outside Upwork, or asks for large amounts of free unpaid "test work".
+SKIP (apply = false) when
+- The business is not ecommerce, or Shopify / ecommerce is only mentioned in passing.
+- Development or design on another platform (WooCommerce, Magento, Wix, Squarespace, Webflow, WordPress, custom code). A migration from those to Shopify is fine, apply.
+- The main work is Amazon, Etsy, eBay, Walmart or TikTok Shop marketplace management.
+- Google Ads only, SEO, AEO, backlinks, video editing, graphic or logo design, copywriting, UGC, influencer or affiliate work, Klaviyo or email marketing specialist, mentor or coach roles.
+- Custom software, mobile apps, backend, cloud or AI pipelines that are not for an online store.
+- A specific native language or nationality I cannot meet ("US based only", "native Spanish"). English is fine.
+- Scam signs: work or payment outside Upwork, or large unpaid test work.
 
-SCORE (0-10)
-10 = perfect fit for my strongest skills (Shopify design/dev/CRO, fashion or lifestyle store, dropshipping).
-7-9 = good fit (any Shopify / ecommerce work from my skills list, including Meta ads, VA and customer support for ecommerce brands).
-4-6 = partly fits.
-Below 4 = poor fit (usually apply = false).
+SCORE (0 to 10)
+- 9 to 10: clearly my work AND likely long term or recurring (ongoing support, VA, store manager, monthly store work, ads management) or a strong Shopify development or CRO job.
+- 7 to 8: good fit, one time project in my areas.
+- 4 to 6: partly fits.
+- Below 4: not my work (apply = false).
