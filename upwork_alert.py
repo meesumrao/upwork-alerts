@@ -41,18 +41,22 @@ AI_MODEL = os.getenv("AI_MODEL") or "gpt-5.4"
 
 # ---------- Settings ----------
 ACTOR_ID = "hyperbach/upwork-scraper-ai"
-FEED_ID = "meesum-v4"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
+FEED_ID = "meesum-v5"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
 STORE_NAME = "upwork-shopify-state"
 # Hyperbach se wahi jobs mangwao jin mein kahin bhi ye lafz hon (baaqi chhaant script karti hai)
 KEYWORDS = ["shopify", "shopifyplus", "ecommerce", "e-commerce", "e commerce",
-            "dropshipping", "dropship", "drop shipping", "drop ship"]
+            "dropshipping", "dropship", "drop shipping", "drop ship", "bigcommerce"]
 
 # Rule 1: title ya skills mein shopify / ecommerce ho
-CORE_RE = re.compile(r"shopify|\be[\s\-\u2010\u2011]?commerce|\bdrop[\s\-]?ship", re.I)
+CORE_RE = re.compile(r"shopify|\be[\s\-\u2010\u2011]?commerce|\bdrop[\s\-]?ship|bigcommerce", re.I)
 # Rule 2: title mein in mein se koi kaam ho, aur job mein kahin bhi shopify / ecommerce ho
 ROLE_RE = re.compile(
     r"\b(virtual assistants?|va|cust(?:omer)? services?|cust(?:omer)? support|"
-    r"managers?|management|operators?|operations?|list\w*|cro)\b", re.I)
+    r"email support|chat support|live chat|customer care|customer experience|customer success|"
+    r"support (?:agents?|specialists?|representatives?|reps?)|help ?desk|"
+    r"store managers?|ecommerce managers?|store operations?|operations managers?|operators?|"
+    r"product list\w*|listings?|cro|conversion|"
+    r"meta ads?|facebook ads?|fb ads?|instagram ads?|tik ?tok ads?)\b", re.I)
 MY_COUNTRY = "Pakistan"
 LIMIT = 200                           # ek run mein max jobs (safety)
 FRESH_MAX_AGE_MIN = 60                # 1 ghante se purani job kabhi nahi
@@ -62,7 +66,7 @@ BACKUP_ACTOR = "blackfalcondata/upwork-scraper"
 BACKUP_EVERY_MIN = int(os.getenv("BACKUP_EVERY_MIN") or "60")   # 0 = backup band
 BACKUP_MAX_AGE_MIN = 60               # backup bhi sirf pichle 1 ghante ki jobs
 BACKUP_QUERY = ("shopify OR shopifyplus OR ecommerce OR \"e-commerce\" OR \"e commerce\" OR "
-                "dropshipping OR dropship OR \"drop shipping\"")
+                "dropshipping OR dropship OR \"drop shipping\" OR bigcommerce")
 BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
 BACKFILL_LIMIT = 300
 SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
@@ -157,23 +161,30 @@ def normalize(row):
 # ---------- Sharten ----------
 # ---------- Hyperbach se sirf kaam ki jobs mangwao (3 feeds) ----------
 # Feed 1: title mein shopify / ecommerce
-FEED_TITLE = "shopify OR ecommerce OR e-commerce OR e commerce OR dropship OR drop ship"
+FEED_TITLE = "shopify OR ecommerce OR e-commerce OR e commerce OR dropship OR drop ship OR bigcommerce"
 # Feed 2: skills mein shopify / ecommerce
-FEED_SKILLS = "shopify, ecommerce, e-commerce, dropship, drop ship"
+FEED_SKILLS = "shopify, ecommerce, e-commerce, dropship, drop ship, bigcommerce"
 # Feed 3: title mein kaam ka role, aur job mein kahin bhi shopify / ecommerce
+# (khaali "manager" hata diya: "Meta and Google Ads Manager" jaisi jobs isi se aati thi)
 FEED_ROLES = ("virtual assistant OR customer service OR customer support OR cust service OR cust support OR "
-              "manager OR management OR operator OR operations OR listing OR cro OR conversion")
+              "email support OR chat support OR live chat OR customer care OR customer experience OR "
+              "customer success OR support agent OR support specialist OR support representative OR help desk OR "
+              "store manager OR ecommerce manager OR store operations OR operations manager OR operator OR "
+              "product listing OR listings OR cro OR conversion OR "
+              "meta ads OR facebook ads OR fb ads OR instagram ads OR tiktok ads")
 
 # Ye jobs nahi chahiye (title dekh ke seedha skip, AI tak bhi nahi jati)
 # 1) Ye roles kabhi nahi, chahe title mein shopify bhi ho
 EXCLUDE_ROLE_RE = re.compile(
-    r"creative strateg|\bugc\b|creator|influencer|affiliate|klaviyo|email marketing|\bmentor|\bcoach", re.I)
+    r"creative strateg|\bugc\b|creator|influencer|affiliate|klaviyo|email marketing|\bmentor|\bcoach|"
+    r"video edit|motion graphic|\bthumbnail|voice ?over|copywrit|blog writ|content writ", re.I)
 # 2) Doosre platforms / backend: sirf tab skip jab title mein shopify NA ho
 #    (taake "WooCommerce to Shopify migration" ya "Full stack Shopify developer" na kate)
 EXCLUDE_TECH_RE = re.compile(
     r"amazon|tik ?tok shop|\bwix\b|squarespace|woocommerce|magento|webflow|wordpress|\bsquare\b|"
     r"\baws\b|supabase|postgres|back ?end|full[\s\-]?stack|\bdevops\b|"
-    r"\bseo\b|\baeo\b|backlink|link ?building", re.I)
+    r"\bseo\b|\baeo\b|backlink|link ?building|google ads|\bppc\b|logo|graphic design|"
+    r"mobile app|\bios\b|android|react native|flutter|\betsy\b|ebay|walmart", re.I)
 
 
 def excluded(title):
@@ -246,9 +257,10 @@ def job_to_text(job, info):
         f"Skills: {', '.join(job['skills'])}",
         f"Experience level: {job['experience']}",
     ]
-    lines += ["", "Description:", job["description"]]
-    if job["questions"]:
-        lines += ["", "Screening questions:"] + [f"{i}. {q}" for i, q in enumerate(job["questions"], 1)]
+    desc = job["description"]
+    if len(desc) > 3000:
+        desc = desc[:3000] + " ..."
+    lines += ["", "Description:", desc]
     return "\n".join(lines)
 
 
