@@ -41,14 +41,14 @@ AI_MODEL = os.getenv("AI_MODEL") or "gpt-5.4"
 
 # ---------- Settings ----------
 ACTOR_ID = "hyperbach/upwork-scraper-ai"
-FEED_ID = "meesum-v5"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
+FEED_ID = "meesum-v6"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
 STORE_NAME = "upwork-shopify-state"
 # Hyperbach se wahi jobs mangwao jin mein kahin bhi ye lafz hon (baaqi chhaant script karti hai)
-KEYWORDS = ["shopify", "shopifyplus", "ecommerce", "e-commerce", "e commerce",
-            "dropshipping", "dropship", "drop shipping", "drop ship", "bigcommerce"]
+KEYWORDS = ["shopify", "shopifyplus"]
 
 # Rule 1: title ya skills mein shopify / ecommerce ho
-CORE_RE = re.compile(r"shopify|\be[\s\-\u2010\u2011]?commerce|\bdrop[\s\-]?ship|bigcommerce", re.I)
+CORE_RE = re.compile(r"shopify", re.I)          # niche: sirf Shopify
+SKILL_RE = re.compile(r"shopify|\bliquid\b", re.I)  # skills mein Shopify ya Liquid
 # Rule 2: title mein in mein se koi kaam ho, aur job mein kahin bhi shopify / ecommerce ho
 ROLE_RE = re.compile(
     r"\b(virtual assistants?|va|cust(?:omer)? services?|cust(?:omer)? support|"
@@ -65,8 +65,7 @@ FRESH_MAX_AGE_MIN = 60                # 1 ghante se purani job kabhi nahi
 BACKUP_ACTOR = "blackfalcondata/upwork-scraper"
 BACKUP_EVERY_MIN = int(os.getenv("BACKUP_EVERY_MIN") or "60")   # 0 = backup band
 BACKUP_MAX_AGE_MIN = 60               # backup bhi sirf pichle 1 ghante ki jobs
-BACKUP_QUERY = ("shopify OR shopifyplus OR ecommerce OR \"e-commerce\" OR \"e commerce\" OR "
-                "dropshipping OR dropship OR \"drop shipping\" OR bigcommerce")
+BACKUP_QUERY = "shopify OR shopifyplus"
 BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
 BACKFILL_LIMIT = 300
 SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
@@ -161,9 +160,9 @@ def normalize(row):
 # ---------- Sharten ----------
 # ---------- Hyperbach se sirf kaam ki jobs mangwao (3 feeds) ----------
 # Feed 1: title mein shopify / ecommerce
-FEED_TITLE = "shopify OR ecommerce OR e-commerce OR e commerce OR dropship OR drop ship OR bigcommerce"
+FEED_TITLE = "shopify"
 # Feed 2: skills mein shopify / ecommerce
-FEED_SKILLS = "shopify, ecommerce, e-commerce, dropship, drop ship, bigcommerce"
+FEED_SKILLS = "shopify, liquid"
 # Feed 3: title mein kaam ka role, aur job mein kahin bhi shopify / ecommerce
 # (khaali "manager" hata diya: "Meta and Google Ads Manager" jaisi jobs isi se aati thi)
 FEED_ROLES = ("virtual assistant OR customer service OR customer support OR cust service OR cust support OR "
@@ -176,6 +175,10 @@ FEED_ROLES = ("virtual assistant OR customer service OR customer support OR cust
 # Ye jobs nahi chahiye (title dekh ke seedha skip, AI tak bhi nahi jati)
 # 1) Ye roles kabhi nahi, chahe title mein shopify bhi ho
 EXCLUDE_ROLE_RE = re.compile(
+    r"virtual assistant|\bva\b|customer (?:service|support|care|success|experience)|email support|"
+    r"chat support|live chat|support (?:agent|specialist|representative)|help ?desk|"
+    r"meta ads?|facebook ads?|\bfb ads?|instagram ads?|tik ?tok ads?|google ads|media buy|\bppc\b|"
+    r"ads? manager|social media|marketing|data entry|"
     r"creative strateg|\bugc\b|creator|influencer|affiliate|klaviyo|email marketing|\bmentor|\bcoach|"
     r"video edit|motion graphic|\bthumbnail|voice ?over|copywrit|blog writ|content writ", re.I)
 # 2) Doosre platforms / backend: sirf tab skip jab title mein shopify NA ho
@@ -199,14 +202,8 @@ def excluded(title):
 
 
 def keyword_match(job):
-    title = job["title"]
     skills = " ".join(job["skills"])
-    if CORE_RE.search(title) or CORE_RE.search(skills):
-        return True
-    if ROLE_RE.search(title):
-        everything = " ".join([title, skills, job["description"]])
-        return bool(CORE_RE.search(everything))
-    return False
+    return bool(CORE_RE.search(job["title"]) or SKILL_RE.search(skills))
 
 
 def check(job):
@@ -491,7 +488,6 @@ def fetch_jobs(client, feed_start):
     feeds = {
         "title": {"title": FEED_TITLE},
         "skills": {"skills": FEED_SKILLS},
-        "roles": {"title": FEED_ROLES, "any_words": KEYWORDS},
     }
     # Kharcha bachao: hire rate aur budget bhi Apify pe hi chhaanto
     hire_parts = {"hr41": {"hire_rate": f">={MIN_HIRE_RATE + 1}"},   # purane achhe clients
