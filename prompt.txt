@@ -1,29 +1,25 @@
 WHO I AM
-Meesum, Shopify and ecommerce expert, 12+ years. Ran my own clothing brand for 10 years and now runs a 30+ store Shopify operation with custom automation. I am building a team, so I want work that can grow into long term, recurring clients.
+Meesum, Shopify developer and expert, 12+ years in ecommerce. Profile title: "Shopify Developer & Expert | Custom Theme, Liquid, CRO, Store Redesign".
+My best paid and best reviewed work: custom Shopify development ($2,400 site update with latest features, $800 cart subscription feature), a complete conversion focused store redesign, custom product page CSS and features, custom sections. I also ran a 30+ store Shopify operation, so I know the Shopify admin inside out.
 
-MY 5 WORK AREAS (apply to all of these)
-1. Shopify development: store setup, design and redesign, themes, Liquid, custom sections, bug fixes, speed, Figma to Shopify, Shopify Plus. BigCommerce too.
-2. CRO: product pages, offers, bundles, cart and checkout, mobile UX.
-3. Store operations: daily store management, store manager or operator roles, product uploads and listings, catalogs, inventory, order management, dropshipping and supplier work, store automation.
-4. Customer support and VA for ecommerce stores: emails, live chat, order issues, tracking, returns, refunds, store admin.
-5. Meta and TikTok ads for ecommerce brands: setup, pixel, testing, scaling.
+APPLY (apply = true) ONLY for these
+1. Custom Shopify development: Liquid, theme customization, custom sections and features, metafields, apps and integrations inside Shopify, Shopify Plus, checkout and cart features, bug fixes, speed.
+2. Store setup, design and redesign on Shopify, including Figma to Shopify and migrations TO Shopify.
+3. CRO on Shopify: product pages, collections, offers, bundles, cart and checkout, mobile UX.
+4. Shopify store operations that use the Shopify admin and theme editor in depth (promotions, discounts, collections, merchandising, launches, site QA), like a Shopify operations specialist for a brand or agency.
 
-APPLY (apply = true) when
-- The job is for an online store or ecommerce brand and the main work is in one of my 5 areas.
-- For support, VA, operations, listings, CRO and ads, the store can be on any platform (Shopify, BigCommerce or other). For development, it must be Shopify or BigCommerce.
-- Low budget, part time, full time and long term roles are all fine.
-
-SKIP (apply = false) when
-- The business is not ecommerce, or Shopify / ecommerce is only mentioned in passing.
-- Development or design on another platform (WooCommerce, Magento, Wix, Squarespace, Webflow, WordPress, custom code). A migration from those to Shopify is fine, apply.
-- The main work is Amazon, Etsy, eBay, Walmart or TikTok Shop marketplace management.
-- Google Ads only, SEO, AEO, backlinks, video editing, graphic or logo design, copywriting, UGC, influencer or affiliate work, Klaviyo or email marketing specialist, mentor or coach roles.
-- Custom software, mobile apps, backend, cloud or AI pipelines that are not for an online store.
-- A specific native language or nationality I cannot meet ("US based only", "native Spanish"). English is fine.
-- Scam signs: work or payment outside Upwork, or large unpaid test work.
+SKIP (apply = false)
+- Meta, Facebook, TikTok or Google ads, media buying, social media or marketing roles, even for Shopify brands.
+- Customer service, customer support, virtual assistant, data entry or simple product upload only jobs.
+- Dropshipping product research, sourcing or "manage my dropshipping store" generalist roles.
+- SEO, AEO, backlinks, content, copywriting, video, graphic or logo design, UGC, influencer, Klaviyo or email marketing.
+- Any platform other than Shopify (WooCommerce, Wix, Magento, BigCommerce, Webflow, WordPress, Amazon, Etsy, TikTok Shop). A migration to Shopify is fine.
+- Custom software, mobile apps or backend work not inside Shopify.
+- A native language or nationality I cannot meet. English is fine.
+- Scam signs: work or payment outside Upwork, large unpaid test work.
 
 SCORE (0 to 10)
-- 9 to 10: clearly my work AND likely long term or recurring (ongoing support, VA, store manager, monthly store work, ads management) or a strong Shopify development or CRO job.
-- 7 to 8: good fit, one time project in my areas.
+- 9 to 10: custom Shopify development, redesign or CRO with a clear scope and a client who pays well, or long term Shopify development work.
+- 7 to 8: good Shopify fit (smaller dev task, store setup, Shopify operations role).
 - 4 to 6: partly fits.
 - Below 4: not my work (apply = false).
