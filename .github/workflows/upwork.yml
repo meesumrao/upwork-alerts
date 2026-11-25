@@ -40,44 +40,4 @@ jobs:
           SLEEP_AT: ${{ vars.SLEEP_AT }}
           WAKE_AT: ${{ vars.WAKE_AT }}
           MIN_HOURLY: ${{ vars.MIN_HOURLY }}
-          MIN_FIXED: ${{ vars.MIN_FIXED }}name: Upwork Shopify Alerts
-
-on:
-  schedule:
-    - cron: "*/5 * * * *"    # har 5 minute (GitHub ki sab se kam had)
-  workflow_dispatch:
-    inputs:
-      backfill_hours:
-        description: "Purani jobs test karni hon to ghante likhein (jaise 48). Normal run ke liye khaali chhorein."
-        required: false
-        default: ""
-
-concurrency:
-  group: upwork-alerts
-  cancel-in-progress: false
-
-jobs:
-  run:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - run: python upwork_alert.py
-        env:
-          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          AI_BASE_URL: ${{ vars.AI_BASE_URL }}
-          AI_MODEL: ${{ vars.AI_MODEL }}
-          SEND_SKIPPED: ${{ vars.SEND_SKIPPED }}
-          BACKFILL_HOURS: ${{ inputs.backfill_hours }}
-          STATUS_MESSAGES: ${{ vars.STATUS_MESSAGES }}
-          BACKUP_EVERY_MIN: ${{ vars.BACKUP_EVERY_MIN }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLEEP_AT: ${{ vars.SLEEP_AT }}
-          WAKE_AT: ${{ vars.WAKE_AT }}
+          MIN_FIXED: ${{ vars.MIN_FIXED }}
