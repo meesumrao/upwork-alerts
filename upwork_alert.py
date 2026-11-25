@@ -2,12 +2,16 @@
 Upwork jobs -> AI (apply ya skip) -> Slack
 Data source: Apify actor hyperbach/upwork-scraper-ai (jobs ~1-4 minute mein)
 
+Niche: Shopify development, store builds, redesign, CRO, Shopify automation / AI, tracking fixes
+
 Sharten:
-  - Hourly: koi bhi rate
-  - Fixed: minimum $250
+  - Keyword: title mein Shopify, ya skills mein Shopify / Liquid,
+    ya Apps Script / Google Sheets automation (ecommerce se judi)
+  - Hourly: minimum $5 (rate na likha ho to bhi theek)   -> GitHub variable MIN_HOURLY
+  - Fixed: minimum $150                                  -> GitHub variable MIN_FIXED
   - Payment verified
-  - Client hire rate > 40%
-  - Client total spent / total hires > $50
+  - Client hire rate 0% (naya) ya 41%+
+  - Client total spent / total hires > $50 (0 hire wala naya client theek)
   - Client ne Pakistan ke freelancers ko allow kiya ho
 """
 import json
@@ -41,7 +45,7 @@ AI_MODEL = os.getenv("AI_MODEL") or "gpt-5.4"
 
 # ---------- Settings ----------
 ACTOR_ID = "hyperbach/upwork-scraper-ai"
-FEED_ID = "meesum-v6"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
+FEED_ID = "meesum-v7"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
 STORE_NAME = "upwork-shopify-state"
 # Hyperbach se wahi jobs mangwao jin mein kahin bhi ye lafz hon (baaqi chhaant script karti hai)
 KEYWORDS = ["shopify", "shopifyplus"]
@@ -49,6 +53,10 @@ KEYWORDS = ["shopify", "shopifyplus"]
 # Rule 1: title ya skills mein shopify / ecommerce ho
 CORE_RE = re.compile(r"shopify", re.I)          # niche: sirf Shopify
 SKILL_RE = re.compile(r"shopify|\bliquid\b", re.I)  # skills mein Shopify ya Liquid
+# Automation jobs: Apps Script / Google Sheets automation, lekin sirf ecommerce se judi
+AUTO_TITLE_RE = re.compile(r"apps? ?script|google sheets? automation", re.I)
+AUTO_SKILL_RE = re.compile(r"google apps script", re.I)
+ECOM_CONTEXT_RE = re.compile(r"e[\s\-]?commerce|shopify|\borders?\b|inventory|\bstores?\b|\bproducts?\b", re.I)
 # Rule 2: title mein in mein se koi kaam ho, aur job mein kahin bhi shopify / ecommerce ho
 ROLE_RE = re.compile(
     r"\b(virtual assistants?|va|cust(?:omer)? services?|cust(?:omer)? support|"
@@ -72,8 +80,8 @@ SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
 # Har run ke baad status message: "every_run" (har 5 min), "hourly" (ghante mein ek), "off"
 STATUS_MESSAGES = (os.getenv("STATUS_MESSAGES") or "off").lower()
 
-MIN_FIXED = 250
-MIN_HOURLY = 5            # hourly band kam az kam $5 tak jaye (rate na likha ho to bhi chalega)
+MIN_FIXED = int(os.getenv("MIN_FIXED") or "150")    # fixed budget kam az kam
+MIN_HOURLY = int(os.getenv("MIN_HOURLY") or "5")     # hourly band kam az kam (rate na likha ho to bhi chalega)
 MIN_HIRE_RATE = 40        # is se upar
 MIN_SPENT_PER_HIRE = 50   # is se upar
 
@@ -160,9 +168,9 @@ def normalize(row):
 # ---------- Sharten ----------
 # ---------- Hyperbach se sirf kaam ki jobs mangwao (3 feeds) ----------
 # Feed 1: title mein shopify / ecommerce
-FEED_TITLE = "shopify"
+FEED_TITLE = "shopify OR apps script OR google sheets automation OR google sheet automation"
 # Feed 2: skills mein shopify / ecommerce
-FEED_SKILLS = "shopify, liquid"
+FEED_SKILLS = "shopify, liquid, google apps script"
 # Feed 3: title mein kaam ka role, aur job mein kahin bhi shopify / ecommerce
 # (khaali "manager" hata diya: "Meta and Google Ads Manager" jaisi jobs isi se aati thi)
 FEED_ROLES = ("virtual assistant OR customer service OR customer support OR cust service OR cust support OR "
@@ -178,32 +186,43 @@ EXCLUDE_ROLE_RE = re.compile(
     r"virtual assistant|\bva\b|customer (?:service|support|care|success|experience)|email support|"
     r"chat support|live chat|support (?:agent|specialist|representative)|help ?desk|"
     r"meta ads?|facebook ads?|\bfb ads?|instagram ads?|tik ?tok ads?|google ads|media buy|\bppc\b|"
-    r"ads? manager|social media|marketing|data entry|"
+    r"ads? manager|social media|marketing|"
     r"creative strateg|\bugc\b|creator|influencer|affiliate|klaviyo|email marketing|\bmentor|\bcoach|"
     r"video edit|motion graphic|\bthumbnail|voice ?over|copywrit|blog writ|content writ", re.I)
 # 2) Doosre platforms / backend: sirf tab skip jab title mein shopify NA ho
 #    (taake "WooCommerce to Shopify migration" ya "Full stack Shopify developer" na kate)
 EXCLUDE_TECH_RE = re.compile(
     r"amazon|tik ?tok shop|\bwix\b|squarespace|woocommerce|magento|webflow|wordpress|\bsquare\b|"
-    r"\baws\b|supabase|postgres|back ?end|full[\s\-]?stack|\bdevops\b|"
+    r"\baws\b|supabase|postgres|full[\s\-]?stack|\bdevops\b|"
     r"\bseo\b|\baeo\b|backlink|link ?building|google ads|\bppc\b|logo|graphic design|"
     r"mobile app|\bios\b|android|react native|flutter|\betsy\b|ebay|walmart", re.I)
 
 
+# Ads wala lafz ho lekin kaam tracking setup ka ho (pixel, CAPI, GTM) to skip nahi
+TRACKING_RE = re.compile(r"pixel|tracking|conversions? api|\bcapi\b|\bgtm\b|tag manager", re.I)
+ADS_WORD_RE = re.compile(r"meta|facebook|\bfb\b|google ads", re.I)
+
+
 def excluded(title):
     m = EXCLUDE_ROLE_RE.search(title)
-    if m:
+    if m and not (ADS_WORD_RE.search(m.group(0)) and TRACKING_RE.search(title)):
         return m.group(0)
     if not re.search(r"shopify", title, re.I):
         m = EXCLUDE_TECH_RE.search(title)
-        if m:
+        if m and not (ADS_WORD_RE.search(m.group(0)) and TRACKING_RE.search(title)):
             return m.group(0)
     return None
 
 
 def keyword_match(job):
     skills = " ".join(job["skills"])
-    return bool(CORE_RE.search(job["title"]) or SKILL_RE.search(skills))
+    if CORE_RE.search(job["title"]) or SKILL_RE.search(skills):
+        return True
+    # Apps Script / Google Sheets automation: sirf ecommerce se judi ho
+    if AUTO_TITLE_RE.search(job["title"]) or AUTO_SKILL_RE.search(skills):
+        context = " ".join([job["title"], skills, job["description"][:1000]])
+        return bool(ECOM_CONTEXT_RE.search(context))
+    return False
 
 
 def check(job):
@@ -307,7 +326,8 @@ Respond ONLY with a JSON object, no other text:
 {{"apply": true or false,
   "score": integer 0-10 (how good a fit),
   "summary": "2 to 3 short sentences in ROMAN URDU (Urdu written in English letters, e.g. 'Client ko naya Shopify store chahiye...'): client ko kya chahiye, asal kaam kya hain, aur koi deadline, tool ya khaas shart",
-  "reason": "very short reason for the decision, max 12 words"}}"""
+  "reason": "start with ONE angle tag ([DESIGN], [CRO], [DEV], [AUTOMATION], [AI] or [TRACKING]), then a very short reason, max 12 words",
+  "risk": "one short warning if something looks risky (vague scope, tiny budget, unrealistic deadline, off-platform contact), otherwise empty string"}}"""
 
 
 def ask_ai(job_text):
@@ -453,6 +473,8 @@ def job_lines(job, info, ai, label, est=None):
     if ai.get("summary"):
         lines.append(f"📝 {esc(ai['summary'])}")
     lines.append(f"🧠 {esc(ai.get('reason', ''))}")
+    if str(ai.get("risk") or "").strip():
+        lines.append(f"⚠️ {esc(ai['risk'])}")
     return lines
 
 
