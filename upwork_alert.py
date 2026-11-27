@@ -1,18 +1,16 @@
 """
-Upwork jobs -> AI (apply ya skip) -> Slack
+Upwork jobs -> sharten -> AI (apply / review / skip) -> Slack
 Data source: Apify actor hyperbach/upwork-scraper-ai (jobs ~1-4 minute mein)
 
-Niche: Shopify development, store builds, redesign, CRO, Shopify automation / AI, tracking fixes
+Niche (v8): Ecommerce / Shopify operations & management (ops, store manager, project manager,
+CS manager, 3PL / fulfillment), phir Shopify development (redesign, setup, migration) aur automation / AI.
 
-Sharten:
-  - Keyword: title mein Shopify, ya skills mein Shopify / Liquid,
-    ya Apps Script / Google Sheets automation (ecommerce se judi)
-  - Hourly: minimum $5 (rate na likha ho to bhi theek)   -> GitHub variable MIN_HOURLY
-  - Fixed: minimum $150                                  -> GitHub variable MIN_FIXED
-  - Payment verified
-  - Client hire rate 0% (naya) ya 41%+
-  - Client total spent / total hires > $50 (0 hire wala naya client theek)
-  - Client ne Pakistan ke freelancers ko allow kiya ho
+Sharten (sirf yehi):
+  - (title mein LIST_A aur description mein LIST_B) ya (title mein LIST_B aur description mein LIST_A)
+  - Hourly: kam az kam $5 (range ka max)       -> GitHub variable MIN_HOURLY
+  - Fixed: kam az kam $150                      -> GitHub variable MIN_FIXED
+  - Client hire rate 40% ya zyada (sirf jab 10 se zyada jobs post ki hon, naya client theek)
+  - Client total spent / total hires $50 se zyada (0 hire wala naya client theek)
 """
 import json
 import os
@@ -43,29 +41,63 @@ AI_API_KEY = os.environ["AI_API_KEY"]
 AI_BASE_URL = os.getenv("AI_BASE_URL") or "https://api.openai.com/v1"
 AI_MODEL = os.getenv("AI_MODEL") or "gpt-5.4"
 
+
+def env_bool(name, default):
+    v = (os.getenv(name) or "").strip().lower()
+    return default if v == "" else v in ("1", "true", "yes", "on")
+
+
+# =====================================================================
+#  CONFIG: sab keywords aur hadein yahan (edit karna ho to sirf ye hissa)
+# =====================================================================
+# LIST_A: ecommerce context
+LIST_A = [
+    r"shopify\w*", r"shopline", r"e[\s\-]?commerce", r"ecom", r"online[\s\-]?stores?",
+    r"dtc", r"d2c", r"dropship\w*", r"stores?",
+]
+# LIST_B: role / kaam
+LIST_B = [
+    r"operations?", r"operators?", r"ops", r"back[\s\-]?end", r"manag\w*", r"team",
+    r"project managers?", r"right[\s\-]?hand", r"coo", r"head of", r"lead(?![\s\-]?gen)",
+    r"store managers?", r"customer (?:service|support|experience|care|success)", r"support",
+    r"virtual assistants?", r"va", r"assistants?", r"admin\w*",
+    r"product listings?", r"product uploads?", r"listings?", r"catalog\w*",
+    r"order processing", r"order management", r"fulfil+ment", r"inventory",
+    r"automat\w*", r"ai", r"claude", r"chat ?gpt", r"google sheets?", r"apps? ?script",
+    r"redesign\w*", r"store (?:setup|set up|build\w*)", r"migrat\w*", r"experts?",
+    # roz ka kaam / ops
+    r"daily tasks?", r"day[\s\-]to[\s\-]day", r"store (?:maintenance|updates?|tasks?)", r"orders?",
+    r"shipping", r"returns?", r"refunds?", r"chargebacks?", r"suppliers?", r"sourcing", r"3pl", r"logistics",
+    r"coordinat\w*", r"specialists?", r"generalists?", r"directors?", r"executives?",
+    r"sops?", r"kpis?", r"reporting", r"dashboards?", r"workflows?", r"processes",
+    r"collections?", r"merchandis\w*", r"promotions?", r"launch\w*",
+]
+# Code score (GPT se pehle)
+SCORE_OPS_WORDS = [r"team", r"suppliers?", r"3pl", r"fulfil+ment", r"inventory", r"sops?", r"kpis?",
+                   r"weekly reports?", r"refunds?", r"escalations?", r"hiring", r"training"]
+SCORE_LONG_WORDS = [r"long[\s\-]?term", r"ongoing", r"contract[\s\-]to[\s\-]hire", r"more than 6 months",
+                    r"6\+ months", r"full[\s\-]?time", r"permanent"]
+
+MIN_HOURLY = int(os.getenv("MIN_HOURLY") or "5")           # hourly range ka max is se kam = skip
+MIN_FIXED = int(os.getenv("MIN_FIXED") or "150")           # fixed budget kam az kam
+MIN_HIRE_RATE = 40        # hire rate 40% ya zyada (sirf jab client 10 se zyada jobs post kar chuka ho)
+HIRE_RATE_AFTER_JOBS = 10  # is se kam / barabar jobs = naya client, hire rate nahi dekhte
+MIN_SPENT_PER_HIRE = 50   # spent / hires is se zyada
+
+# Skip jobs bhi Slack pe (sirf wo jo niche se match hui, baaqi kachra nahi)
+SEND_SKIPPED = env_bool("SEND_SKIPPED", True)
+# Review: AI apply kahe lekin score is se kam ho to "🟡 Review" label
+REVIEW_BELOW = 7
+
+# Apify search (title + description + skills teeno mein). "store" jaan boojh ke nahi (bahut aam lafz)
+FEED_KEYWORDS = ('shopify OR shopifyplus OR shopline OR ecommerce OR e-commerce OR ecom OR '
+                 '"online store" OR DTC OR D2C OR dropshipping')
+# =====================================================================
+
 # ---------- Settings ----------
 ACTOR_ID = "hyperbach/upwork-scraper-ai"
-FEED_ID = "meesum-v7"                 # Hyperbach isi naam se yaad rakhta hai kaunsi jobs bhej chuka
+FEED_ID = "meesum-v8"                 # naya naam = sirf abhi ke baad ki jobs (purani nahi)
 STORE_NAME = "upwork-shopify-state"
-# Hyperbach se wahi jobs mangwao jin mein kahin bhi ye lafz hon (baaqi chhaant script karti hai)
-KEYWORDS = ["shopify", "shopifyplus"]
-
-# Rule 1: title ya skills mein shopify / ecommerce ho
-CORE_RE = re.compile(r"shopify", re.I)          # niche: sirf Shopify
-SKILL_RE = re.compile(r"shopify|\bliquid\b", re.I)  # skills mein Shopify ya Liquid
-# Automation jobs: Apps Script / Google Sheets automation, lekin sirf ecommerce se judi
-AUTO_TITLE_RE = re.compile(r"apps? ?script|google sheets? automation", re.I)
-AUTO_SKILL_RE = re.compile(r"google apps script", re.I)
-ECOM_CONTEXT_RE = re.compile(r"e[\s\-]?commerce|shopify|\borders?\b|inventory|\bstores?\b|\bproducts?\b", re.I)
-# Rule 2: title mein in mein se koi kaam ho, aur job mein kahin bhi shopify / ecommerce ho
-ROLE_RE = re.compile(
-    r"\b(virtual assistants?|va|cust(?:omer)? services?|cust(?:omer)? support|"
-    r"email support|chat support|live chat|customer care|customer experience|customer success|"
-    r"support (?:agents?|specialists?|representatives?|reps?)|help ?desk|"
-    r"store managers?|ecommerce managers?|store operations?|operations managers?|operators?|"
-    r"product list\w*|listings?|cro|conversion|"
-    r"meta ads?|facebook ads?|fb ads?|instagram ads?|tik ?tok ads?)\b", re.I)
-MY_COUNTRY = "Pakistan"
 LIMIT = 200                           # ek run mein max jobs (safety)
 FRESH_MAX_AGE_MIN = 60                # 1 ghante se purani job kabhi nahi
 
@@ -73,21 +105,43 @@ FRESH_MAX_AGE_MIN = 60                # 1 ghante se purani job kabhi nahi
 BACKUP_ACTOR = "blackfalcondata/upwork-scraper"
 BACKUP_EVERY_MIN = int(os.getenv("BACKUP_EVERY_MIN") or "60")   # 0 = backup band
 BACKUP_MAX_AGE_MIN = 60               # backup bhi sirf pichle 1 ghante ki jobs
-BACKUP_QUERY = "shopify OR shopifyplus"
+BACKUP_QUERY = "shopify OR shopifyplus OR shopline"   # tang rakha (backup ka kharcha zyada hai)
 BACKFILL_HOURS = int(os.getenv("BACKFILL_HOURS") or "0")
 BACKFILL_LIMIT = 300
-SEND_SKIPPED = (os.getenv("SEND_SKIPPED") or "false").lower() == "true"
 # Har run ke baad status message: "every_run" (har 5 min), "hourly" (ghante mein ek), "off"
 STATUS_MESSAGES = (os.getenv("STATUS_MESSAGES") or "off").lower()
-
-MIN_FIXED = int(os.getenv("MIN_FIXED") or "150")    # fixed budget kam az kam
-MIN_HOURLY = int(os.getenv("MIN_HOURLY") or "5")     # hourly band kam az kam (rate na likha ho to bhi chalega)
-MIN_HIRE_RATE = 40        # is se upar
-MIN_SPENT_PER_HIRE = 50   # is se upar
 
 HERE = Path(__file__).parent
 CRITERIA = (HERE / "prompt.txt").read_text(encoding="utf-8")
 
+
+def words_re(items):
+    """Poore lafz match karo: 'VA' value mein nahi, 'AI' email mein nahi."""
+    return re.compile(r"(?<![A-Za-z0-9])(?:" + "|".join(items) + r")(?![A-Za-z0-9])", re.I)
+
+
+LIST_A_RE = words_re(LIST_A)
+LIST_B_RE = words_re(LIST_B)
+OPS_WORDS_RE = words_re(SCORE_OPS_WORDS)
+LONG_RE = words_re(SCORE_LONG_WORDS)
+MONTHLY_RE = re.compile(r"\$\s?([\d,]{3,7})(?:\.\d+)?\s*(?:usd\s*)?(?:/|per|a)\s*(?:month|mo)\b", re.I)
+
+# Angle tags (pehla jo match ho, isi tarteeb mein)
+TAG_RULES = [
+    ("[OPS]", words_re([r"operations?", r"operators?", r"ops", r"back[\s\-]?end", r"head of", r"coo",
+                        r"right[\s\-]?hand"])),
+    ("[PM]", words_re([r"project managers?", r"project management"])),
+    ("[STORE]", words_re([r"store managers?", r"shopify managers?", r"e[\s\-]?commerce managers?",
+                          r"ecom managers?", r"store management"])),
+    ("[CS-MGR]", re.compile(r"(?=.*\bcustomer (?:service|support|experience|care|success)\b)"
+                            r"(?=.*\b(?:managers?|lead|head)\b)", re.I | re.S)),
+    ("[AUTO]", words_re([r"automat\w*", r"ai", r"claude", r"chat ?gpt", r"google sheets?", r"apps? ?script"])),
+    ("[DEV]", words_re([r"redesign\w*", r"store (?:setup|set up|build\w*)", r"migrat\w*", r"experts?",
+                        r"shopify developer", r"developer", r"theme", r"liquid"])),
+    ("[VA/CS]", words_re([r"virtual assistants?", r"va", r"assistants?", r"customer (?:service|support|care)",
+                          r"support", r"product listings?", r"product uploads?", r"listings?"])),
+]
+TAGS = [t for t, _ in TAG_RULES]
 
 
 # ---------- Helpers ----------
@@ -138,6 +192,8 @@ def normalize(row):
     qs = []
     for q in row.get("questions") or []:
         qs.append(q if isinstance(q, str) else (q.get("question") or q.get("text") or str(q)))
+    duration = " ".join(str(row.get(k) or "") for k in ("engagement_label", "engagement_duration",
+                                                         "duration", "ai_duration")).strip()
     return {
         "uid": str(row.get("id") or row.get("url") or ""),
         "title": row.get("title") or "Untitled",
@@ -149,107 +205,81 @@ def normalize(row):
         "hourly_max": num(row.get("price_max")),
         "skills": skills,
         "experience": row.get("experience_level") or "?",
+        "duration": duration,
         "country": row.get("client_location") or "?",
         "payment_verified": bool(row.get("buyer_payment_verified")),
         "hire_rate": num(row.get("hire_rate")),
         "hires": num(row.get("hires")),
+        "jobs_posted": num(row.get("jobs_posted")),
         "spent": num(row.get("total_spent")),
         "rating": row.get("buyer_score"),
         "applicants": row.get("client_total_applicants"),
         "questions": qs,
-        "anti_bot": row.get("ai_anti_bot_phrase"),
-        "must_include": row.get("ai_specific_requirements_before_applying"),
         "allowed_countries": row.get("qual_countries"),
         "posted": row.get("date_posted"),
         "source": row.get("_source") or "feed",
     }
 
 
+def body_text(job):
+    """'Description' = description + skills (dono mein dhoondo)."""
+    return " ".join([job.get("description") or "", " ".join(job.get("skills") or [])])
+
+
 # ---------- Sharten ----------
-# ---------- Hyperbach se sirf kaam ki jobs mangwao (3 feeds) ----------
-# Feed 1: title mein shopify / ecommerce
-FEED_TITLE = "shopify OR apps script OR google sheets automation OR google sheet automation"
-# Feed 2: skills mein shopify / ecommerce
-FEED_SKILLS = "shopify, liquid, google apps script"
-# Feed 3: title mein kaam ka role, aur job mein kahin bhi shopify / ecommerce
-# (khaali "manager" hata diya: "Meta and Google Ads Manager" jaisi jobs isi se aati thi)
-FEED_ROLES = ("virtual assistant OR customer service OR customer support OR cust service OR cust support OR "
-              "email support OR chat support OR live chat OR customer care OR customer experience OR "
-              "customer success OR support agent OR support specialist OR support representative OR help desk OR "
-              "store manager OR ecommerce manager OR store operations OR operations manager OR operator OR "
-              "product listing OR listings OR cro OR conversion OR "
-              "meta ads OR facebook ads OR fb ads OR instagram ads OR tiktok ads")
-
-# Ye jobs nahi chahiye (title dekh ke seedha skip, AI tak bhi nahi jati)
-# 1) Ye roles kabhi nahi, chahe title mein shopify bhi ho
-EXCLUDE_ROLE_RE = re.compile(
-    r"virtual assistant|\bva\b|customer (?:service|support|care|success|experience)|email support|"
-    r"chat support|live chat|support (?:agent|specialist|representative)|help ?desk|"
-    r"meta ads?|facebook ads?|\bfb ads?|instagram ads?|tik ?tok ads?|google ads|media buy|\bppc\b|"
-    r"ads? manager|social media|marketing|"
-    r"creative strateg|\bugc\b|creator|influencer|affiliate|klaviyo|email marketing|\bmentor|\bcoach|"
-    r"video edit|motion graphic|\bthumbnail|voice ?over|copywrit|blog writ|content writ", re.I)
-# 2) Doosre platforms / backend: sirf tab skip jab title mein shopify NA ho
-#    (taake "WooCommerce to Shopify migration" ya "Full stack Shopify developer" na kate)
-EXCLUDE_TECH_RE = re.compile(
-    r"amazon|tik ?tok shop|\bwix\b|squarespace|woocommerce|magento|webflow|wordpress|\bsquare\b|"
-    r"\baws\b|supabase|postgres|full[\s\-]?stack|\bdevops\b|"
-    r"\bseo\b|\baeo\b|backlink|link ?building|google ads|\bppc\b|logo|graphic design|"
-    r"mobile app|\bios\b|android|react native|flutter|\betsy\b|ebay|walmart", re.I)
-
-
-# Ads wala lafz ho lekin kaam tracking setup ka ho (pixel, CAPI, GTM) to skip nahi
-TRACKING_RE = re.compile(r"pixel|tracking|conversions? api|\bcapi\b|\bgtm\b|tag manager", re.I)
-ADS_WORD_RE = re.compile(r"meta|facebook|\bfb\b|google ads", re.I)
-
-
-def excluded(title):
-    m = EXCLUDE_ROLE_RE.search(title)
-    if m and not (ADS_WORD_RE.search(m.group(0)) and TRACKING_RE.search(title)):
-        return m.group(0)
-    if not re.search(r"shopify", title, re.I):
-        m = EXCLUDE_TECH_RE.search(title)
-        if m and not (ADS_WORD_RE.search(m.group(0)) and TRACKING_RE.search(title)):
-            return m.group(0)
-    return None
-
-
 def keyword_match(job):
-    skills = " ".join(job["skills"])
-    if CORE_RE.search(job["title"]) or SKILL_RE.search(skills):
-        return True
-    # Apps Script / Google Sheets automation: sirf ecommerce se judi ho
-    if AUTO_TITLE_RE.search(job["title"]) or AUTO_SKILL_RE.search(skills):
-        context = " ".join([job["title"], skills, job["description"][:1000]])
-        return bool(ECOM_CONTEXT_RE.search(context))
-    return False
+    """(title A + desc B) ya (title B + desc A)."""
+    title, desc = job["title"], body_text(job)
+    ta, tb = bool(LIST_A_RE.search(title)), bool(LIST_B_RE.search(title))
+    da, db = bool(LIST_A_RE.search(desc)), bool(LIST_B_RE.search(desc))
+    return (ta and db) or (tb and da)
 
 
 def check(job):
-    bad = excluded(job["title"])
-    if bad:
-        return False, f"title mein '{bad}' (aap ka kaam nahi)"
+    """Return (ok, info, niche_match). niche_match False = kachra, Slack pe bhi nahi."""
     if not keyword_match(job):
-        return False, "keyword rule match nahi"
-    if not job["payment_verified"]:
-        return False, "payment not verified"
+        return False, "keyword rule match nahi", False
     hire_rate = job["hire_rate"] or 0
-    if 0 < hire_rate <= MIN_HIRE_RATE:                # 0% (naya client) theek, 1-40% nahi
-        return False, f"hire rate {hire_rate:.0f}%"
+    posted_jobs = job.get("jobs_posted") or 0
+    if posted_jobs > HIRE_RATE_AFTER_JOBS and hire_rate < MIN_HIRE_RATE:   # naya client theek
+        return False, f"hire rate {hire_rate:.0f}% ({posted_jobs:.0f} jobs posted)", True
     hires, spent = job["hires"] or 0, job["spent"] or 0
     per_hire = spent / hires if hires else 0
-    if hires > 0 and per_hire <= MIN_SPENT_PER_HIRE:  # 0 hire wala naya client theek
-        return False, f"${per_hire:.0f}/hire"
+    if hires > 0 and per_hire <= MIN_SPENT_PER_HIRE:                       # 0 hire wala naya client theek
+        return False, f"${per_hire:.0f}/hire", True
     if job["kind"] == "hourly":
         top = job["hourly_max"] or job["hourly_min"]
         if top is not None and top < MIN_HOURLY:      # rate likha hi nahi to theek
-            return False, f"hourly ${top:.0f} se kam"
+            return False, f"hourly ${top:.0f} se kam", True
     if job["kind"] == "fixed" and (job["fixed_budget"] or 0) < MIN_FIXED:
-        return False, "fixed budget low"
-    allowed = job["allowed_countries"]
-    if allowed and MY_COUNTRY not in allowed:
-        return False, f"{MY_COUNTRY} allowed nahi"
-    return True, {"per_hire": per_hire}
+        return False, f"fixed ${job['fixed_budget'] or 0:,.0f} (kam az kam ${MIN_FIXED})", True
+    return True, {"per_hire": per_hire}, True
+
+
+def code_score(job):
+    """GPT se pehle apna score (max 10) aur wajahein."""
+    title, desc = job["title"], body_text(job)
+    pts, why = 0, []
+    if LIST_A_RE.search(title) and LIST_B_RE.search(title):
+        pts += 3; why.append("title +3")
+    if OPS_WORDS_RE.search(desc):
+        pts += 2; why.append("ops kaam +2")
+    monthly = max([num(x.replace(",", "")) or 0 for x in MONTHLY_RE.findall(desc)] or [0])
+    if (job["kind"] == "hourly" and (job["hourly_max"] or 0) >= 20) or monthly >= 1500:
+        pts += 2; why.append("rate +2")
+    if LONG_RE.search(f"{title} {desc} {job['duration']}"):
+        pts += 2; why.append("long term +2")
+    if (job["spent"] or 0) >= 10000:
+        pts += 1; why.append("$10K+ client +1")
+    return min(pts, 10), why
+
+
+def angle_tag(job):
+    for text in (job["title"], body_text(job)[:1500]):
+        for tag, rx in TAG_RULES:
+            if rx.search(text):
+                return tag
+    return "[OPS]"
 
 
 def money_text(job):
@@ -268,53 +298,20 @@ def job_to_text(job, info):
     lines = [
         f"Title: {job['title']}",
         f"Budget: {money_text(job)}",
-        f"Client: {job['country']}, spent ${job['spent'] or 0:,.0f}, {job['hires'] or 0:.0f} hires, "
+        f"Duration: {job['duration'] or '?'}",
+        f"Client: {job['country']}, {job.get('jobs_posted') or 0:.0f} jobs posted, spent ${job['spent'] or 0:,.0f}, "
+        f"{job['hires'] or 0:.0f} hires, "
         f"hire rate {job['hire_rate'] or 0:.0f}%, rating {job['rating'] or '?'}",
         f"Skills: {', '.join(job['skills'])}",
         f"Experience level: {job['experience']}",
+        f"Code pre-score: {info['code_score']}/10 ({', '.join(info['code_why']) or 'no bonus'})",
+        f"Suggested angle tag: {info['tag']}",
     ]
     desc = job["description"]
     if len(desc) > 3000:
         desc = desc[:3000] + " ..."
     lines += ["", "Description:", desc]
     return "\n".join(lines)
-
-
-ESTIMATE_PROMPT = """You price Upwork jobs for Meesum, a Shopify and ecommerce expert with 12+ years of experience.
-You are NOT shown the client's budget on purpose. Judge only from the work itself.
-Estimate how many hours an experienced freelancer would really need, and a fair, competitive Upwork price for
-this work: a fixed price for the whole job and an hourly rate. Be realistic for the Upwork market, not too high, not too low.
-For ongoing roles (VA, support, ads management, store manager) give the hourly rate and a fixed price per month at the
-likely weekly hours.
-
-Respond ONLY with a JSON object, no other text:
-{"hours": "e.g. 8-12 (or e.g. 20/week for ongoing)",
- "fixed": "e.g. $300-400 (or e.g. $1,200/month for ongoing)",
- "hourly": "e.g. $25-35/hr",
- "best": "fixed or hourly",
- "why": "max 10 words"}"""
-
-
-def estimate_rate(job):
-    """Budget dikhaye baghair, sirf kaam dekh ke rate ka andaza."""
-    lines = [f"Title: {job['title']}", f"Skills: {', '.join(job['skills'])}",
-             f"Experience level: {job['experience']}", f"Job type the client chose: {job['kind']}",
-             "", "Description:", job["description"]]
-    if job["questions"]:
-        lines += ["", "Screening questions:"] + [f"- {q}" for q in job["questions"]]
-    r = requests.post(
-        f"{AI_BASE_URL.rstrip('/')}/chat/completions",
-        headers={"Authorization": f"Bearer {AI_API_KEY}"},
-        json={"model": AI_MODEL,
-              "messages": [{"role": "system", "content": ESTIMATE_PROMPT},
-                           {"role": "user", "content": "\n".join(lines)}],
-              "response_format": {"type": "json_object"}},
-        timeout=90,
-    )
-    r.raise_for_status()
-    content = r.json()["choices"][0]["message"]["content"].strip()
-    content = content.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    return json.loads(content)
 
 
 SYSTEM_PROMPT = f"""You decide whether a freelancer should apply to an Upwork job. You do NOT write proposals.
@@ -325,8 +322,8 @@ SYSTEM_PROMPT = f"""You decide whether a freelancer should apply to an Upwork jo
 Respond ONLY with a JSON object, no other text:
 {{"apply": true or false,
   "score": integer 0-10 (how good a fit),
-  "summary": "2 to 3 short sentences in ROMAN URDU (Urdu written in English letters, e.g. 'Client ko naya Shopify store chahiye...'): client ko kya chahiye, asal kaam kya hain, aur koi deadline, tool ya khaas shart",
-  "reason": "start with ONE angle tag ([DESIGN], [CRO], [DEV], [AUTOMATION], [AI] or [TRACKING]), then a very short reason, max 12 words",
+  "summary": "2 to 3 short sentences in ROMAN URDU (Urdu written in English letters, e.g. 'Client ko Shopify store ke liye operations manager chahiye...'): client ko kya chahiye, asal kaam kya hain, aur koi deadline, tool ya khaas shart",
+  "reason": "start with ONE angle tag ({', '.join(TAGS)}), then a very short reason, max 12 words",
   "risk": "one short warning if something looks risky (vague scope, tiny budget, unrealistic deadline, off-platform contact), otherwise empty string"}}"""
 
 
@@ -344,6 +341,15 @@ def ask_ai(job_text):
     content = r.json()["choices"][0]["message"]["content"].strip()
     content = content.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
     return json.loads(content)
+
+
+def fix_reason(reason, tag):
+    """Reason hamesha kisi sahi tag se shuru ho."""
+    reason = str(reason or "").strip()
+    if any(reason.upper().startswith(t) for t in TAGS):
+        return reason
+    reason = re.sub(r"^\[[^\]]*\]\s*", "", reason)     # purana / ghalat tag hatao
+    return f"{tag} {reason}".strip()
 
 
 # ---------- Slack ----------
@@ -376,74 +382,6 @@ def slack_job(lines, url=None):
     slack_post({"text": lines[0] if lines else "Upwork job", "blocks": blocks})
 
 
-EMOJI_RE = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F\u200D]+")
-
-
-def strip_emoji(text):
-    """Slack mobile copy mein emoji ':sunglasses:' ban jata hai, is liye proposal se hata do."""
-    cleaned = EMOJI_RE.sub("", text or "")
-    return "\n".join(re.sub(r" {2,}", " ", line).rstrip() for line in cleaned.split("\n"))
-
-
-CONTRACTIONS = {"I'm": "I am", "I've": "I have", "I'll": "I will", "I'd": "I would"}
-DOMAIN_LINE = re.compile(r"^\s*\S+\.\S+\s*$")
-
-
-WORD_RE = re.compile(r"[A-Za-z][A-Za-z']*")
-SENT_END_RE = re.compile(r"(?<!\.)[.?!][\"')]*\s+$")
-
-
-def sentence_case(line):
-    """Capital sirf jumle ke shuru mein (aur 'I' aur CRO/SEO jaise chhote acronyms), baaqi sab chhota."""
-    def fix(m):
-        word = m.group(0)
-        before = line[:m.start()]
-        if word == "I" or word.startswith("I'"):
-            return word
-        if word.isupper() and 2 <= len(word) <= 6:
-            return word                                   # CRO, SEO, COD, AWB, API
-        if before.strip() == "" or SENT_END_RE.search(before):
-            return word[0].upper() + word[1:].lower()      # jumle ka pehla lafz
-        return word.lower()
-    return WORD_RE.sub(fix, line)
-
-
-def format_proposal(text, anti_bot=None):
-    """Hook poora CAPS mein, body mein capital sirf jumlon ke shuru mein."""
-    lines = text.split("\n")
-    hi_idx = next((i for i, l in enumerate(lines) if re.match(r"\s*hi\b", l, re.I)), None)
-    name_idx = next((i for i, l in enumerate(lines) if l.strip().lower() == "meesum"), len(lines))
-    out = []
-    for i, line in enumerate(lines):
-        if hi_idx is not None and i < hi_idx:
-            if anti_bot and line.strip().lower() == str(anti_bot).strip().lower():
-                out.append(line)                           # client ka maanga hua lafz waisa hi
-            else:
-                out.append(line.upper())                   # poora hook CAPS
-        elif hi_idx is not None and hi_idx < i < name_idx:
-            out.append(sentence_case(line))
-        else:
-            out.append(line)
-    return "\n".join(out)
-
-
-def humanize(text):
-    """Proposal copy-ready: emoji nahi, dash/hyphen nahi, I'm/I've waghera poore."""
-    text = strip_emoji(text).replace("\u2019", "'")
-    for short, full in CONTRACTIONS.items():
-        text = re.sub(rf"\b{re.escape(short)}\b", full, text)
-        text = re.sub(rf"\b{re.escape(short.upper())}\b", full.upper(), text)
-    out = []
-    for line in text.split("\n"):
-        if not DOMAIN_LINE.match(line):                       # website list ko na chhedo
-            line = re.sub(r"\s*[\u2014\u2013]\s*", ", ", line)  # em/en dash
-            line = re.sub(r"\s+-\s+", ", ", line)                # " - "
-            line = re.sub(r"(?<=\w)-(?=\w)", " ", line)            # day-to-day -> day to day
-            line = re.sub(r" {2,}", " ", line).rstrip()
-        out.append(line)
-    return "\n".join(out)
-
-
 PKT = timezone(timedelta(hours=5))
 
 
@@ -457,98 +395,108 @@ def posted_text(job):
     return f"⏱ Posted {ago} min ago ({stamp})"
 
 
-def job_lines(job, info, ai, label, est=None):
-    lines = [
-        f"{label} *{esc(job['title'])}*",
-        f"💰 {esc(money_text(job))}  |  ⭐ {ai.get('score', '?')}/10  |  🏢 {esc(job['country'])}",
-        f"${job['spent'] or 0:,.0f} spent  |  {job['hires'] or 0:.0f} hires (${info['per_hire']:,.0f}/hire)  |  "
-        f"{job['hire_rate'] or 0:.0f}% hire rate",
-    ]
+def client_line(job):
+    hires, spent = job["hires"] or 0, job["spent"] or 0
+    per_hire = spent / hires if hires else 0
+    return (f"{job.get('jobs_posted') or 0:.0f} jobs posted  |  ${spent:,.0f} spent  |  {hires:.0f} hires (${per_hire:,.0f}/hire)  |  "
+            f"{job['hire_rate'] or 0:.0f}% hire rate")
+
+
+def extra_line(job):
     extra = [posted_text(job)]
     if job.get("source") == "backup":
         extra.append("🛟 Backup")
     if job["applicants"] is not None:
         extra.append(f"👥 {job['applicants']} proposals")
-    lines.append("  |  ".join(e for e in extra if e))
+    return "  |  ".join(e for e in extra if e)
+
+
+def job_lines(job, info, ai, label):
+    lines = [
+        f"{label} *{esc(job['title'])}*",
+        f"💰 {esc(money_text(job))}  |  ⭐ AI {ai.get('score', '?')}/10  |  🧮 Code {info['code_score']}/10  |  "
+        f"🏢 {esc(job['country'])}",
+        client_line(job),
+        extra_line(job),
+    ]
     if ai.get("summary"):
         lines.append(f"📝 {esc(ai['summary'])}")
-    lines.append(f"🧠 {esc(ai.get('reason', ''))}")
+    lines.append(f"🧠 {esc(fix_reason(ai.get('reason'), info['tag']))}")
     if str(ai.get("risk") or "").strip():
         lines.append(f"⚠️ {esc(ai['risk'])}")
     return lines
 
 
-def notify(job, info, ai, est=None):
-    slack_job(job_lines(job, info, ai, "✅ Apply:", est), job["url"])
+def apply_label(ai):
+    try:
+        score = int(ai.get("score"))
+    except (TypeError, ValueError):
+        score = 10
+    return "🟡 Review:" if score < REVIEW_BELOW else "✅ Apply:"
+
+
+def notify(job, info, ai):
+    slack_job(job_lines(job, info, ai, apply_label(ai)), job["url"])
+
+
+def notify_skipped(job, info, ai):
+    slack_job(job_lines(job, info, ai, "⏭ Skipped (AI):"), job["url"])
 
 
 def notify_rejected(job, reason):
-    """Script ki sharton pe kati job (AI tak nahi gayi)."""
-    hires, spent = job["hires"] or 0, job["spent"] or 0
-    per_hire = spent / hires if hires else 0
+    """Niche se match hui lekin sharton (budget / client / skip list) pe kati."""
     lines = [
         f"🚫 Skipped (sharten): *{esc(job['title'])}*",
         f"💰 {esc(money_text(job))}  |  🏢 {esc(job['country'])}",
-        f"${spent:,.0f} spent  |  {hires:.0f} hires (${per_hire:,.0f}/hire)  |  {job['hire_rate'] or 0:.0f}% hire rate",
-        "  |  ".join(e for e in [posted_text(job), "🛟 Backup" if job.get("source") == "backup" else None] if e),
+        client_line(job),
+        extra_line(job),
         f"❌ Wajah: {esc(reason)}",
     ]
     slack_job(lines, job["url"])
 
 
-def notify_skipped(job, info, ai, est=None):
-    slack_job(job_lines(job, info, ai, "⏭ Skipped:", est), job["url"])
-
-
 # ---------- Main ----------
 def fetch_jobs(client, feed_start):
     base = {
-        # Server pe sharten (reject hui jobs ke paise nahi lagte)
-        "buyer_payment_verified": True,
+        # Server pe hi chhaant (reject hui jobs ke paise nahi lagte)
+        "keywords": FEED_KEYWORDS,           # title + description + skills mein LIST_A
+        "keywords_match": "strict",          # "matlab se" match nahi, sirf asal lafz
         "whats_new": False,
     }
-    feeds = {
-        "title": {"title": FEED_TITLE},
-        "skills": {"skills": FEED_SKILLS},
-    }
-    # Kharcha bachao: hire rate aur budget bhi Apify pe hi chhaanto
-    hire_parts = {"hr41": {"hire_rate": f">={MIN_HIRE_RATE + 1}"},   # purane achhe clients
-                  "hr0": {"hire_rate": "<=0"}}                         # naye clients (0%)
-    price_parts = {"hourly": {"price_type": "Hourly", "price_min": f">={MIN_HOURLY}",
+    # Kharcha bachao: hire rate aur budget bhi Apify pe hi chhaanto (4 runs)
+    hire_parts = {"hr40": {"hire_rate": f">={MIN_HIRE_RATE}"},                  # achhe purane clients
+                  "new": {"jobs_posted": f"<={HIRE_RATE_AFTER_JOBS}"}}          # naye clients (10 ya kam jobs)
+    price_parts = {"hourly": {"price_type": "Hourly", "price_max": f">={MIN_HOURLY}",
                               "include_unspecified_rate": "all"},
                    "fixed": {"price_type": "Fixed-price", "price": f">={MIN_FIXED}"}}
     if BACKFILL_HOURS > 0:
         print(f"BACKFILL: pichle {BACKFILL_HOURS} ghante ki jobs")
     jobs_in = []
-    for fname, ffilt in feeds.items():
-        for hname, hfilt in hire_parts.items():
-            for pname, pfilt in price_parts.items():
-                name = f"{fname}-{hname}-{pname}"
-                run_input = {**base, **ffilt, **hfilt, **pfilt, "clientId": f"{FEED_ID}-{name}"}
-                if BACKFILL_HOURS > 0:
-                    run_input.update({"notifications_only": False, "date_posted": f"{BACKFILL_HOURS}h",
-                                      "limit": BACKFILL_LIMIT})
-                else:
-                    run_input.update({"notifications_only": True, "limit": LIMIT,
-                                      "created_at": f">={feed_start}"})
-                jobs_in.append((name, run_input))
+    for hname, hfilt in hire_parts.items():
+        for pname, pfilt in price_parts.items():
+            name = f"ecom-{hname}-{pname}"
+            run_input = {**base, **hfilt, **pfilt, "clientId": f"{FEED_ID}-{name}"}
+            if BACKFILL_HOURS > 0:
+                run_input.update({"notifications_only": False, "date_posted": f"{BACKFILL_HOURS}h",
+                                  "limit": BACKFILL_LIMIT})
+            else:
+                run_input.update({"notifications_only": True, "limit": LIMIT,
+                                  "created_at": f">={feed_start}"})
+            jobs_in.append((name, run_input))
 
-    # Saari feeds ek saath (taake run jaldi khatam ho)
+    # Saari runs ek saath (taake run jaldi khatam ho)
     from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    with ThreadPoolExecutor(max_workers=4) as pool:
         results = list(pool.map(lambda x: (x[0], run_actor(client, ACTOR_ID, x[1])), jobs_in))
 
-    rows, ids, per_feed = [], set(), {}
+    rows, ids = [], set()
     for name, got in results:
-        key = name.split("-")[0]
-        per_feed[key] = per_feed.get(key, 0) + len(got)
+        print(f"Feed '{name}': {len(got)} jobs")
         for r in got:
             rid = str(r.get("id"))
             if rid not in ids:
                 ids.add(rid)
                 rows.append(r)
-    for key, n in per_feed.items():
-        print(f"Feed '{key}': {n} jobs")
     return rows
 
 
@@ -587,8 +535,6 @@ def backup_prefilter(row):
             "description": row.get("description") or row.get("descriptionMarkdown") or ""}
     if not keyword_match(mini):
         return False
-    if row.get("clientPaymentVerified") is False:
-        return False
     if "FIXED" in str(row.get("jobType") or "").upper():
         budget = num(row.get("budgetAmount"))
         if budget is not None and budget < MIN_FIXED:
@@ -601,7 +547,6 @@ def fetch_backup(client, known_ids, max_age=BACKUP_MAX_AGE_MIN):
     bf_rows = run_actor(client, BACKUP_ACTOR, {
         "query": BACKUP_QUERY,
         "sort": "recency",
-        "verifiedPaymentOnly": True,
         "maxAgeMinutes": max_age + 5,        # thoda overlap, purani job script kaat deti hai
         "maxResults": 100,
         "incrementalMode": True,
@@ -763,33 +708,34 @@ def main():
         stats["new"] += 1
         if job["source"] == "backup":
             stats["backup"] += 1
-        ok, info = check(job)
+        ok, info, niche = check(job)
         if not ok:
             stats["fail"] += 1
             print(f"Sharten fail: {job['title'][:50]} ({info})")
-            if SEND_SKIPPED:
+            if SEND_SKIPPED and niche:            # kachra (niche se bahar) Slack pe nahi
                 try:
                     notify_rejected(job, info)
                 except Exception as ex:
                     print("Slack error:", ex)
             continue
-        est = None
+        info["code_score"], info["code_why"] = code_score(job)
+        info["tag"] = angle_tag(job)
         try:
             ai = ask_ai(job_to_text(job, info))
         except Exception as ex:
             print("AI error:", ex)
             slack_job([f"⚠️ AI error, khud dekh lein: *{esc(job['title'])}*",
-                       f"💰 {esc(money_text(job))}"], job["url"])
+                       f"💰 {esc(money_text(job))}  |  🧮 Code {info['code_score']}/10"], job["url"])
             continue
         try:
             if ai.get("apply"):
                 stats["apply"] += 1
-                notify(job, info, ai, est)
+                notify(job, info, ai)
             else:
                 stats["skip"] += 1
                 print(f"AI skip: {job['title'][:50]} ({ai.get('reason')})")
                 if SEND_SKIPPED:
-                    notify_skipped(job, info, ai, est)
+                    notify_skipped(job, info, ai)
         except Exception as ex:
             print("Slack error:", ex)
         kv.set_record("STATE", {**state, "seen": seen[-3000:], "hb_started": True, "hb_feed": FEED_ID})
